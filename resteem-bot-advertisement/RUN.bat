@@ -1,0 +1,1 @@
+node resteem-bot-advertisement.js
