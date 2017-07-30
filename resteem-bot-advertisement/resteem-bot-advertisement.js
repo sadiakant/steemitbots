@@ -15,15 +15,18 @@ var MIN_ADVERTISMENT_REPUTATION = 20,
 
 var MIN_POST_SIZE = 500;
 
-var URL_TO_INTRODUCTION_POST = "https://steemit.com/resteembot/@resteembot/resteem-bot-introduction";
-var URL_TO_VOLUNTEER_POST = "https://steemit.com/resteembot/@resteembot/resteem-bot-update-a-plea-for-help-2017725t204737459z";
+var URL_TO_INTRODUCTION_POST = "https://steemit.com/resteembot/@resteembot/how-to-use-resteembot";
+var URL_TO_VOLUNTEER_POST = "https://steemit.com/resteembot/@resteembot/how-to-help-resteem-bot-spread-the-word";
 
 var ADVERTISMENT_COMENT = "Hi. I am a volunteer bot for @resteembot that upvoted you.\n" +
 	"Your post was chosen at random, as part of the advertisment campaign for @resteembot.\n" +
 	"@resteembot is meant to help minnows get noticed by re-steeming their posts\n" +
-	"Even better: If your reputation is lower than 28 re-steeming only costs 0.001 SBD!\n" +
+	"-----\n" +
+	"To use the bot, one must follow it for at least 3 hours, and then make a transaction where the memo is the url of the post.\n" +
 	"If you want to learn more - [read the introduction post of @resteembot](" + URL_TO_INTRODUCTION_POST + ").\n" +
-	"If you want help spread the word - [read the advertisment program post](" + URL_TO_VOLUNTEER_POST + ").";
+	"If you want help spread the word - [read the advertisment program post](" + URL_TO_VOLUNTEER_POST + ").\n" +
+	"-----\n" +
+	"Steem ON!";
 
 /////////////
 
@@ -45,9 +48,12 @@ var votequeue = [];
 var commentqueue = [];
 
 /////////////
-
-lookForNewPosts();
-setInterval(function () { lookForNewPosts(); }, MINUTES_BETWEEN_NEW_POST_SEARCH * MINUTE);
+var delay = (Math.random() * 30) | 0;
+log("The bot will start in [" + delay + "] minutes")
+setTimeout(function() {
+	lookForNewPosts();
+	setInterval(function () { lookForNewPosts(); }, MINUTES_BETWEEN_NEW_POST_SEARCH * MINUTE);
+}, delay * MINUTE);
 
 setInterval(function () { voteForAPostInTheQueue(botUser); }, 10 * SECOND);
 

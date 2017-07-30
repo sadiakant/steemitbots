@@ -7,8 +7,7 @@
 var MIN_REPUTATION = 15,
 	NEWBIE_PROMOTION_MAX_REPUTATION = 28;
 
-var botUserData = { name: "resteembot", password: "<SECRET>" };
-
+var botUserData = require("./userData.json")
 
 var MIN_ADVERTISMENT_REPUTATION = 15,
 	MAX_ADVERTISMENT_REPUTATION = 45;
@@ -22,17 +21,15 @@ var ADVERTISMENT_COMENT = "Hi. I am a bot that upvoted you.\n" +
 	"\n----\n" +
 	"PS: If your reputation is lower than " + NEWBIE_PROMOTION_MAX_REPUTATION + " re-blogging only costs 0.001 SBD"
 
-var RESTEEM_UPVOTE_COMMENT = "This post was resteemed by @" + botUserData.name + "!\n" +
-	"Good Luck!\n" +
-	"----\n" +
-	"Learn more about the @resteembot project [in the introduction post](" + URL_TO_INTRODUCTION_POST + ").\n" +
-	"----";
+var RESTEEM_COMMENT = "This post was resteemed by @" + botUserData.name + "!\n" +
+	"Good Luck!\n"+
+	"\n" +
+	"Learn more about the @resteembot project [in the introduction post](" + URL_TO_INTRODUCTION_POST + ").";
 
-var UPVOTE_COMMENT = "This post was upvoted by @" + botUserData.name + "!\n" +
-	"Good Luck!\n" +
-	"----\n" +
-	"Learn more about the @resteembot project [in the introduction post](" + URL_TO_INTRODUCTION_POST + ").\n" +
-	"----";
+var LATE_RESTEEM_COMMENT = "This post was resteemed manually.\n" +
+	"You either didn't follow @" + botUserData.name +", or didn't wait 3 hours before using the service.\n" +
+	"Your post was resteemed anyway, because you made a bigger transaction than usual.\n" +
+	"Thank you for your donation.";
 
 /////////////
 
@@ -107,12 +104,24 @@ function checkForNewTransactions() {
 			else newItems++
 
 			transaction = parseAsTransaction(accountHistory[i]);
-			if (transaction === null || transaction === undefined) continue;
+			if (transaction === null || transaction === undefined) {
+				continue;
+			}
 
 			var follower = followers[transaction.author];
 			if (follower === undefined || follower === null)
 			{ 
 				logPublically(transaction.author + " is not a follower");
+
+				if (transaction.ammount >= 1) {
+					log(transaction.author + "'s post will be resteemed after 10 minutes.");
+					setTimeout(function() {
+						log(transaction.author + "'s post is being resteemed.");
+						resteemqueue.push({ author: transaction.author, permlink: transaction.permlink, transactionIndex: transaction.index });
+						commentqueue.push({ author: transaction.author, permlink: transaction.permlink, body: LATE_RESTEEM_COMMENT });
+					}, 10 * MINUTE);  
+				}
+				
 				continue;
 			}
 
@@ -122,8 +131,11 @@ function checkForNewTransactions() {
 				continue;
 			}
 
-			if (follower.reputation <= NEWBIE_PROMOTION_MAX_REPUTATION || // super small minnows don't have to pay more than 0.001
-				transaction.amount < follower.reputation * 0.001 * 0.9) // Min price = reputation/1000. Example: (45 * 0.001 = 0.045)
+			if (follower.reputation <= NEWBIE_PROMOTION_MAX_REPUTATION) // super small minnows don't have to pay more than 0.001
+			{
+				log(transaction.author + " used the newbie promotion");
+			}
+			else if (transaction.amount < follower.reputation * 0.001 * 0.9) // Min price = reputation/1000. Example: (45 * 0.001 = 0.045)
 			{
 				logPublically(transaction.author + " paid " + transaction.amountStr
 					+ " but the price for " + follower.reputation + " reputation is " + (follower.reputation * 0.001));
@@ -133,9 +145,7 @@ function checkForNewTransactions() {
 			detectedTransactions++;
 			log("Transaction detected: " + transaction.from + " payed [" + transaction.amountStr + "] with memo " + transaction.memo);
 			resteemqueue.push({ author: transaction.author, permlink: transaction.permlink, transactionIndex: transaction.index });
-			commentqueue.push({ author: transaction.author, permlink: transaction.permlink, body: RESTEEM_UPVOTE_COMMENT });
-			logPublically(transaction.author + "'s post will be resteemed.");
-			
+			commentqueue.push({ author: transaction.author, permlink: transaction.permlink, body: RESTEEM_COMMENT });
 			
 			setLastHandledTransaction(transaction.index);
 		}
