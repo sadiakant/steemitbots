@@ -5,7 +5,7 @@
 /////////////
 
 var MIN_REPUTATION = 15,
-	NEWBIE_PROMOTION_MAX_REPUTATION = 28;
+	NEWBIE_PROMOTION_MAX_REPUTATION = 30;
 
 var botUserData = require("./userData.json")
 
