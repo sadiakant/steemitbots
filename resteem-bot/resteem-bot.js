@@ -31,6 +31,17 @@ var LATE_RESTEEM_COMMENT = "This post was resteemed manually.\n" +
 	"Your post was resteemed anyway, because you made a bigger transaction than usual.\n" +
 	"Thank you for your donation.";
 
+var URL_TO_VOTING_LOTTERY_POST = "https://steemit.com/resteembot/@resteembot/resteem-bot-update-day-19-new-functionality";
+
+var WINNER_COMMENT = "Your post was selected at random, and got an upvote."
+	+ "\n[Read about that initiative](" + URL_TO_VOTING_LOTTERY_POST + ")"
+	+ "\n![logo](https://s1.postimg.org/6thlrit1r/Resteem_Bot_-_100.png)";
+
+var WINNER_MEMO = "A post of yours was randomly upvoted by @"+ botUserData.name 
+	+ ". Thank you for using the bot.";
+	
+var WINNER_VOTING_POWER = 10000;
+
 /////////////
 
 var fs = require('fs');
@@ -54,6 +65,7 @@ var votequeue = [];
 var resteemqueue = [];
 var commentqueue = [];
 var transactionmemosqueue = [];
+var transactionqueue = [];
 
 var followers = require(FOLLOWERS_FILEPATH);
 
@@ -63,13 +75,19 @@ var followers = require(FOLLOWERS_FILEPATH);
 
 /////////////
 
-// lookForNewPosts();
-// setInterval(function () { lookForNewPosts(); }, 8 * HOUR);
+var msTo12 = getMillisecondsTill12(); 
+
+/////////////
+
+log("selectPostsForUpvoting starts in " + (msTo12 / HOUR) + " hours") 
+setTimeout(function() {
+	selectPostsForUpvoting();
+	setInterval(function () { selectPostsForUpvoting() }, 24 * HOUR);
+}, msTo12);
 
 updateFollowerList();
 setInterval(function () { updateFollowerList(); }, MUST_FOLLOW_SINCE_HOURS);
 
-checkForNewTransactions();
 setInterval(function () { checkForNewTransactions() }, 10 * SECOND);
 
 setInterval(function () { resteemAPostsInTheQueue(botUser); }, 1 * SECOND);
@@ -78,7 +96,11 @@ setInterval(function () { voteForAPostInTheQueue(botUser); }, 10 * SECOND);
 
 setInterval(function () { logTransactionMemoFromQueue(botUser); }, 10 * SECOND);
 
+setInterval(function () { sendTransactionFromQueue(botUser); }, 10 * SECOND);
+
 setInterval(function () { writeACommentInTheQueue(botUser); }, 40 * SECOND);
+
+setInterval(function () { log("------------- [1 HOUR PASSED] -------------"); }, 1 * HOUR);
 
 /////////////
 
@@ -111,7 +133,7 @@ function checkForNewTransactions() {
 			var follower = followers[transaction.author];
 			if (follower === undefined || follower === null)
 			{ 
-				logPublically(transaction.author + " is not a follower");
+				logPublically(transaction.author + " is not a follower, or 3 hours haven't passed since following", transaction.from);
 
 				if (transaction.ammount >= 1) {
 					log(transaction.author + "'s post will be resteemed after 10 minutes.");
@@ -127,7 +149,7 @@ function checkForNewTransactions() {
 
 			if (follower.reputation < MIN_REPUTATION) 
 			{ 
-				logPublically(transaction.author + " has too low reputation : " + follower.reputation);
+				logPublically(transaction.author + " has too low reputation : " + follower.reputation + ". Minimum is " + MIN_REPUTATION, transaction.from);
 				continue;
 			}
 
@@ -137,8 +159,11 @@ function checkForNewTransactions() {
 			}
 			else if (transaction.amount < follower.reputation * 0.001 * 0.9) // Min price = reputation/1000. Example: (45 * 0.001 = 0.045)
 			{
-				logPublically(transaction.author + " paid " + transaction.amountStr
-					+ " but the price for " + follower.reputation + " reputation is " + (follower.reputation * 0.001));
+				logPublically(
+					transaction.from + " paid " + transaction.amountStr
+						+ " but the price for " + transaction.author + "'s " + follower.reputation + " reputation is "
+						+ (follower.reputation * 0.001).toFixed(3)
+					, transaction.from);
 				continue;
 			}
 
@@ -155,9 +180,13 @@ function checkForNewTransactions() {
 	});
 }
 
-function logPublically(memo){
-	transactionmemosqueue.push(memo);
+function logPublically(memo, to){
 	log(memo);
+
+	if(to === undefined || to == null)
+		transactionmemosqueue.push(memo);
+	else
+		transactionqueue.push({to : to, ammount : "0.001", currency : "SBD", memo : memo});
 }
 
 function updateFollowerList(lastFollowerUsername) {
@@ -253,7 +282,7 @@ function parseAsTransaction(historyItem) {
 		transaction.permlink = authorAndPermlink.substring(transaction.author.length + 1);
 	}
 	catch (ex) {
-		logPublically(transaction.from + "'s memo couldn't be parsed (" + transaction.memo + ")");
+		logPublically(transaction.from + "'s memo couldn't be parsed (" + transaction.memo + ")", transaction.from);
 		return null;
 	}
 
@@ -271,34 +300,63 @@ function parseAsTransaction(historyItem) {
 	return transaction;
 }
 
-function lookForNewPosts() {
-	if (checkShouldStop()) {
-		log("The 'DontStop' file is missing. The program is in ShutDown process.")
-		return; // don't handle more transactions, so that the ques will be empty.
-	}
+function selectPostsForUpvoting() {
+	var now = new Date();
+	var from = now - 24 * HOUR;
+	var to = now - 0;
 
-	steem.api.getDiscussionsByCreated({ "limit": 5 }, function (err, results) {
-		if (err === null) {
-			results = results.reverse();
-			var userNames = results.map(function (r) { return r.author; });
-			steem.api.getAccounts(userNames, function (e, users) {
-				for (var u in users) {
-					var user = users[u];
-					var post = results[userNames.indexOf(user.name)];
-					var reputation = steem.formatter.reputation(user.reputation);
-					if (post.created <= checkForPostsSince) { continue; }
-					if (MIN_REPUTATION <= reputation && reputation <= MAX_REPUTATION) {
-						votequeue.push({ author: user.name, permlink: post.permlink, votingPower: 10000 });
-						commentqueue.push({ author: user.name, permlink: post.permlink, body: ADVERTISMENT_COMENT });
-						log("Noticed post of " + user.name + "[" + reputation + "] ==> " + post.url);
-						checkForPostsSince = post.created;
-					}
-				}
-			});
-		} else {
-			log(err);
+	steem.api.getAccountHistory(botUser.name, 99999999, 1000, function (err, accountHistory) {
+		var foundResteems = [];
+		for (var i in accountHistory) {
+
+			if (!accountHistory.hasOwnProperty(i))
+				continue;
+			
+			var historyItem = accountHistory[i];
+			var op = historyItem[1].op;
+			if(JSON.stringify(op).indexOf("reblog") == -1)
+				continue;
+			
+			var resteemOp = JSON.parse(op[1].json)[1];
+			resteemOp.date = Date.parse(historyItem[1].timestamp);
+
+			if(resteemOp.date < from) continue;
+			if(resteemOp.date > to) continue;
+
+			foundResteems.push(resteemOp);
+		}
+
+		log("Selecting Dayly Upvote Winners > Found " + foundResteems.length + " resteemed articles in the last 24 hours");
+
+		var selected = [];
+		for (var i = 0; i < 10; i++) {
+			var index = Math.floor(Math.random() * foundResteems.length);
+			selected.push(foundResteems.splice(index, 1)[0]);
+		}
+		
+		for (var i in selected) {
+			if (selected.hasOwnProperty(i)) {
+				var resteem = selected[i];
+
+				votequeue.push({author : resteem.author, permlink : resteem.permlink, votingPower : WINNER_VOTING_POWER});
+				commentqueue.push({author : resteem.author, permlink : resteem.permlink, body : WINNER_COMMENT});
+				transactionqueue.push({to : resteem.author, ammount : "0.001", currency : "SBD", memo : WINNER_MEMO});
+			}
 		}
 	});
+}
+
+function getMillisecondsTill12(){
+	var d = new Date();
+	d.setHours(12);
+	d.setMinutes(00);
+	d.setSeconds(00);
+
+	var msTo12 = d - new Date();
+	if (msTo12 < 0)
+		msTo12 += 24 * HOUR
+
+	return msTo12;
 }
 
 /////////////
@@ -335,6 +393,14 @@ function logTransactionMemoFromQueue(ownUser) {
 
 	var memo = transactionmemosqueue.shift();
 	logViaTransaction(ownUser, memo);
+}
+
+function sendTransactionFromQueue(ownUser) {
+	if (transactionqueue.length < 1)
+		return;
+
+	var transaction = transactionqueue.shift();
+	makeTransaction(ownUser, transaction.to, transaction.ammount, transaction.currency, transaction.memo);
 }
 
 /////////////
