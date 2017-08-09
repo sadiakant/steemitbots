@@ -33,7 +33,7 @@ var LATE_RESTEEM_COMMENT = "This post was resteemed manually.\n" +
 
 var URL_TO_VOTING_LOTTERY_POST = "https://steemit.com/resteembot/@resteembot/resteem-bot-update-day-19-new-functionality";
 
-var WINNER_COMMENT = "Your post was selected at random, and got an upvote."
+var WINNER_COMMENT = "You were lucky! Your post was selected for an upvote!"
 	+ "\n[Read about that initiative](" + URL_TO_VOTING_LOTTERY_POST + ")"
 	+ "\n![logo](https://s1.postimg.org/6thlrit1r/Resteem_Bot_-_100.png)";
 
@@ -61,6 +61,8 @@ var botUser = initUser(botUserData);
 var checkForPostsSince = ""
 var lastHandledTransaction = require(LAST_TRANSACTION_FILEPATH).index;
 
+var countOfResteemsIn24Hours = 5000;
+
 var votequeue = [];
 var resteemqueue = [];
 var commentqueue = [];
@@ -74,16 +76,6 @@ var followers = require(FOLLOWERS_FILEPATH);
 // ## PLAYGROUND ## //
 
 /////////////
-
-var msTo12 = getMillisecondsTill12(); 
-
-/////////////
-
-log("selectPostsForUpvoting starts in " + (msTo12 / HOUR) + " hours") 
-setTimeout(function() {
-	selectPostsForUpvoting();
-	setInterval(function () { selectPostsForUpvoting() }, 24 * HOUR);
-}, msTo12);
 
 updateFollowerList();
 setInterval(function () { updateFollowerList(); }, MUST_FOLLOW_SINCE_HOURS);
@@ -99,6 +91,11 @@ setInterval(function () { logTransactionMemoFromQueue(botUser); }, 10 * SECOND);
 setInterval(function () { sendTransactionFromQueue(botUser); }, 10 * SECOND);
 
 setInterval(function () { writeACommentInTheQueue(botUser); }, 40 * SECOND);
+
+setTimeout(function() {
+	countResteemsIn24Hours();
+	setInterval(function () { countResteemsIn24Hours(); }, 1 * HOUR);
+}, getMillisecondsTill12());
 
 setInterval(function () { log("------------- [1 HOUR PASSED] -------------"); }, 1 * HOUR);
 
@@ -171,6 +168,7 @@ function checkForNewTransactions() {
 			log("Transaction detected: " + transaction.from + " payed [" + transaction.amountStr + "] with memo " + transaction.memo);
 			resteemqueue.push({ author: transaction.author, permlink: transaction.permlink, transactionIndex: transaction.index });
 			commentqueue.push({ author: transaction.author, permlink: transaction.permlink, body: RESTEEM_COMMENT });
+			checkIfPostIsLuckyEnoughToBeUpvoted(transaction);
 			
 			setLastHandledTransaction(transaction.index);
 		}
@@ -300,7 +298,7 @@ function parseAsTransaction(historyItem) {
 	return transaction;
 }
 
-function selectPostsForUpvoting() {
+function countResteemsIn24Hours() {
 	var now = new Date();
 	var from = now - 24 * HOUR;
 	var to = now - 0;
@@ -326,24 +324,22 @@ function selectPostsForUpvoting() {
 			foundResteems.push(resteemOp);
 		}
 
-		log("Selecting Dayly Upvote Winners > Found " + foundResteems.length + " resteemed articles in the last 24 hours");
-
-		var selected = [];
-		for (var i = 0; i < 10; i++) {
-			var index = Math.floor(Math.random() * foundResteems.length);
-			selected.push(foundResteems.splice(index, 1)[0]);
-		}
-		
-		for (var i in selected) {
-			if (selected.hasOwnProperty(i)) {
-				var resteem = selected[i];
-
-				votequeue.push({author : resteem.author, permlink : resteem.permlink, votingPower : WINNER_VOTING_POWER});
-				commentqueue.push({author : resteem.author, permlink : resteem.permlink, body : WINNER_COMMENT});
-				transactionqueue.push({to : resteem.author, ammount : "0.001", currency : "SBD", memo : WINNER_MEMO});
-			}
-		}
+		log("Found " + foundResteems.length + " resteemed articles in the last 24 hours");
+		countOfResteemsIn24Hours = foundResteems.length;
 	});
+}
+
+function checkIfPostIsLuckyEnoughToBeUpvoted(postData) {
+	var randomNum = Math.floor(Math.random() * (countOfResteemsIn24Hours / 10));
+	var isWinner = (randomNum === 1)
+	if (isWinner) {
+		log(postData.author + " is lucky! His/her post will be upboted!")
+		setTimeout(function () {
+			votequeue.push({ author: postData.author, permlink: postData.permlink, votingPower: WINNER_VOTING_POWER });
+			commentqueue.push({ author: postData.author, permlink: postData.permlink, body: WINNER_COMMENT });
+			transactionqueue.push({ to: postData.author, ammount: "0.001", currency: "SBD", memo: WINNER_MEMO });
+		}, 60 * SECOND);
+	}
 }
 
 function getMillisecondsTill12(){
