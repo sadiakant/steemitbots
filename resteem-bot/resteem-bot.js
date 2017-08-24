@@ -12,7 +12,7 @@ var botUserData = require("./userData.json")
 var MIN_ADVERTISMENT_REPUTATION = 15,
 	MAX_ADVERTISMENT_REPUTATION = 45;
 
-var URL_TO_INTRODUCTION_POST = "https://steemit.com/resteembot/@resteembot/resteem-bot-introduction";
+var URL_TO_INTRODUCTION_POST = "https://steemit.com/resteembot/@resteembot/how-to-use-resteembot-updated-2017824t202525149z";
 
 var ADVERTISMENT_COMENT = "Hi. I am a bot that upvoted you.\n" +
 	"Your post was chosen at random, as part of my advertisment campaign.\n" +
