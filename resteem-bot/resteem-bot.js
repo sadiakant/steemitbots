@@ -26,6 +26,8 @@ var RESTEEM_COMMENT = "This post was resteemed by @" + botUserData.name + "!\n" 
 	"\n" +
 	"Learn more about the @resteembot project [in the introduction post](" + URL_TO_INTRODUCTION_POST + ").";
 
+var RESTEEMED_THANKS_TO = "\n Your post was resteemed thanks to @";
+
 var LATE_RESTEEM_COMMENT = "This post was resteemed manually.\n" +
 	"You either didn't follow @" + botUserData.name +", or didn't wait 3 hours before using the service.\n" +
 	"Your post was resteemed anyway, because you made a bigger transaction than usual.\n" +
@@ -171,9 +173,12 @@ function checkForNewTransactions() {
 			}
 
 			detectedTransactions++;
+			
 			log("Transaction detected: " + transaction.from + " payed [" + transaction.amountStrFull + "] with memo " + transaction.memo);
+			
+			var thanksTo = (resteemsOwnPost ? null : RESTEEMED_THANKS_TO + transaction.from);
 			resteemqueue.push({ author: transaction.author, permlink: transaction.permlink, transactionIndex: transaction.index });
-			commentqueue.push({ author: transaction.author, permlink: transaction.permlink, body: RESTEEM_COMMENT });
+			commentqueue.push({ author: transaction.author, permlink: transaction.permlink, body: RESTEEM_COMMENT + thanksTo });
 			checkIfPostIsLuckyEnoughToBeUpvoted(transaction);
 			
 			setLastHandledTransaction(transaction.index);
@@ -301,7 +306,7 @@ function parseAsTransaction(historyItem) {
 
 		var memo = transaction.memo.trim();
 
-		if(memo.indexOf("#") !== -1) {
+		if(memo.indexOf("#") >= 0) {
 			logPublically("Resteembot can't resteem comments. Only posts can be resteemed. (your memo was : " + transaction.memo + ")", 
 				transaction.from, transaction.amountStr, transaction.currency);
 			return null;
