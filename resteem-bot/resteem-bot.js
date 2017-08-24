@@ -300,6 +300,13 @@ function parseAsTransaction(historyItem) {
 		}
 
 		var memo = transaction.memo.trim();
+
+		if(memo.indexOf("#") !== -1) {
+			logPublically("Resteembot can't resteem comments. Only posts can be resteemed. (your memo was : " + transaction.memo + ")", 
+				transaction.from, transaction.amountStr, transaction.currency);
+			return null;
+		}
+
 		var authorAndPermlink = memo.substring(memo.indexOf('/@') + 2)
 		transaction.author = authorAndPermlink.split('/')[0];
 		transaction.permlink = authorAndPermlink.substring(transaction.author.length + 1);
