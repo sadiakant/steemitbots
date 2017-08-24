@@ -127,12 +127,13 @@ function checkForNewTransactions() {
 				continue;
 			}
 
-			var follower = followers[transaction.author];
+			var follower = followers[transaction.from];
 			if (follower === undefined || follower === null)
 			{ 
-				logPublically(transaction.author + " is not a follower, or 3 hours haven't passed since following", transaction.from);
+				logPublically(transaction.from + " is not a follower, or 3 hours haven't passed since following", 
+					transaction.from, transaction.amountStr, transaction.currency);
 
-				if (transaction.ammount >= 1) {
+				if (transaction.amount >= 1) {
 					log(transaction.author + "'s post will be resteemed after 10 minutes.");
 					setTimeout(function() {
 						log(transaction.author + "'s post is being resteemed.");
@@ -150,22 +151,27 @@ function checkForNewTransactions() {
 				continue;
 			}
 
-			if (follower.reputation <= NEWBIE_PROMOTION_MAX_REPUTATION) // super small minnows don't have to pay more than 0.001
+			var isNewbie = follower.reputation <= NEWBIE_PROMOTION_MAX_REPUTATION;
+			var resteemsOwnPost = transaction.from === transaction.author;
+			if (isNewbie && resteemsOwnPost) // super small minnows don't have to pay more than 0.001
 			{
 				log(transaction.author + " used the newbie promotion");
 			}
 			else if (transaction.amount < follower.reputation * 0.001 * 0.9) // Min price = reputation/1000. Example: (45 * 0.001 = 0.045)
 			{
-				logPublically(
-					transaction.from + " paid " + transaction.amountStr
-						+ " but the price for " + transaction.author + "'s " + follower.reputation + " reputation is "
-						+ (follower.reputation * 0.001).toFixed(3)
-					, transaction.from);
+				var message = transaction.from + " paid " + transaction.amountStrFull
+					+ " but the price for " + follower.reputation + " reputation is "
+					+ (follower.reputation * 0.001).toFixed(3);
+
+				if (isNewbie && !resteemsOwnPost)
+					message += " (Keep in mind that the cheap newbie price is only for resteeming your own content)"
+
+				logPublically(message, transaction.from, transaction.amountStr, transaction.currency);
 				continue;
 			}
 
 			detectedTransactions++;
-			log("Transaction detected: " + transaction.from + " payed [" + transaction.amountStr + "] with memo " + transaction.memo);
+			log("Transaction detected: " + transaction.from + " payed [" + transaction.amountStrFull + "] with memo " + transaction.memo);
 			resteemqueue.push({ author: transaction.author, permlink: transaction.permlink, transactionIndex: transaction.index });
 			commentqueue.push({ author: transaction.author, permlink: transaction.permlink, body: RESTEEM_COMMENT });
 			checkIfPostIsLuckyEnoughToBeUpvoted(transaction);
@@ -178,13 +184,16 @@ function checkForNewTransactions() {
 	});
 }
 
-function logPublically(memo, to){
+function logPublically(memo, to, amount, currency){
+	amount = amount || "0.001";
+	currency = currency || "SBD";
+
 	log(memo);
 
 	if(to === undefined || to == null)
 		transactionmemosqueue.push(memo);
 	else
-		transactionqueue.push({to : to, ammount : "0.001", currency : "SBD", memo : memo});
+		transactionqueue.push({to : to, amount : amount, currency : currency, memo : memo});
 }
 
 function updateFollowerList(lastFollowerUsername) {
@@ -268,9 +277,25 @@ function parseAsTransaction(historyItem) {
 	var transactionString = transaction.from + " [" + transaction.amount + "] - '" + transaction.memo + "'";
 
 	try {
+		transaction.amountStrFull = transaction.amount;
+		var splitted = transaction.amount.split(' ');
+		transaction.amountStr = transaction.amount;
+		transaction.currency = splitted[1];
+		transaction.amountStr = splitted[0];
+		transaction.amount = parseFloat(transaction.amountStr);
+	}
+	catch (ex) {
+		log("Failed to parse transaction amount: " + transactionString + "\t : \t" + ex);
+		return null;
+	}
+
+	try {
 		var urlIndex = transaction.memo.indexOf(STEEMITURL);
 		if (urlIndex == -1) {
-			logPublically(transaction.from + "'s memo doesn't contain a SteemIt link (" + transaction.memo + ")");
+			logPublically(transaction.from + "'s memo doesn't contain a SteemIt link (" + transaction.memo + "). "
+				+ "The bot will assume that it was a donation. Thank you. "
+				+ "(If it was not a donation, feel free to contact me to settle the problem.)", 
+				transaction.from);
 			return null;
 		}
 
@@ -280,17 +305,8 @@ function parseAsTransaction(historyItem) {
 		transaction.permlink = authorAndPermlink.substring(transaction.author.length + 1);
 	}
 	catch (ex) {
-		logPublically(transaction.from + "'s memo couldn't be parsed (" + transaction.memo + ")", transaction.from);
-		return null;
-	}
-
-	try {
-		transaction.amountStr = transaction.amount;
-		transaction.currency = transaction.amount.split(' ')[1];
-		transaction.amount = parseFloat(transaction.amount.split(' ')[0]);
-	}
-	catch (ex) {
-		log("Failed to parse transaction amount: " + transactionString + "\t : \t" + ex);
+		logPublically(transaction.from + "'s memo couldn't be parsed as link (" + transaction.memo + ")", 
+			transaction.from, transaction.amountStr, transaction.currency);
 		return null;
 	}
 
@@ -337,7 +353,7 @@ function checkIfPostIsLuckyEnoughToBeUpvoted(postData) {
 		setTimeout(function () {
 			votequeue.push({ author: postData.author, permlink: postData.permlink, votingPower: WINNER_VOTING_POWER });
 			commentqueue.push({ author: postData.author, permlink: postData.permlink, body: WINNER_COMMENT });
-			transactionqueue.push({ to: postData.author, ammount: "0.001", currency: "SBD", memo: WINNER_MEMO });
+			transactionqueue.push({ to: postData.author, amount: "0.001", currency: "SBD", memo: WINNER_MEMO });
 		}, 60 * SECOND);
 	}
 }
@@ -396,7 +412,7 @@ function sendTransactionFromQueue(ownUser) {
 		return;
 
 	var transaction = transactionqueue.shift();
-	makeTransaction(ownUser, transaction.to, transaction.ammount, transaction.currency, transaction.memo);
+	makeTransaction(ownUser, transaction.to, transaction.amount, transaction.currency, transaction.memo);
 }
 
 /////////////
@@ -450,10 +466,10 @@ function resteemPost(ownUser, author, permlink) {
 	});
 }
 
-function makeTransaction(ownUser, to, ammount, currency, memo){
-    steem.broadcast.transfer(ownUser.wif, ownUser.name, to, ammount +" "+ currency, memo, function(err, result) {
+function makeTransaction(ownUser, to, amount, currency, memo){
+    steem.broadcast.transfer(ownUser.wif, ownUser.name, to, amount +" "+ currency, memo, function(err, result) {
         if(!err && result) {
-            log("Successfull transaction from " + ownUser.name + " of " + ammount + " " + currency + " to '" + to + "'");
+            log("Successfull transaction from " + ownUser.name + " of " + amount + " " + currency + " to '" + to + "'");
         } else{
             console.log(err.message);
         }
