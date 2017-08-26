@@ -24,7 +24,7 @@ var ADVERTISMENT_COMENT = "Hi. I am a bot that upvoted you.\n" +
 var RESTEEM_COMMENT = "This post was resteemed by @" + botUserData.name + "!\n" +
 	"Good Luck!\n"+
 	"\n" +
-	"Learn more about the @resteembot project [in the introduction post](" + URL_TO_INTRODUCTION_POST + ").";
+	"Learn more about the @" + botUserData.name + " project [in the introduction post](" + URL_TO_INTRODUCTION_POST + ").";
 
 var RESTEEMED_THANKS_TO = "\n Your post was resteemed thanks to @";
 
@@ -307,7 +307,7 @@ function parseAsTransaction(historyItem) {
 		var memo = transaction.memo.trim();
 
 		if(memo.indexOf("#") >= 0) {
-			logPublically("Resteembot can't resteem comments. Only posts can be resteemed. (your memo was : " + transaction.memo + ")", 
+			logPublically("@" + botUserData.name + " can't resteem comments. Only posts can be resteemed. (your memo was : " + transaction.memo + ")", 
 				transaction.from, transaction.amountStr, transaction.currency);
 			return null;
 		}
