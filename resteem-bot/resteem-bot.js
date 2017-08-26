@@ -343,7 +343,12 @@ function countResteemsIn24Hours() {
 			if(JSON.stringify(op).indexOf("reblog") == -1)
 				continue;
 			
-			var resteemOp = JSON.parse(op[1].json)[1];
+			try {
+				var resteemOp = JSON.parse(op[1].json)[1];
+			} catch (error) {
+				continue;
+			}
+
 			resteemOp.date = Date.parse(historyItem[1].timestamp);
 
 			if(resteemOp.date < from) continue;
@@ -400,7 +405,8 @@ function resteemAPostsInTheQueue(ownUser) {
 	var post = resteemqueue.shift();
 	resteemPost(ownUser, post.author, post.permlink);
 
-	setLastHandledTransaction(post.transactionIndex);
+	if(post.transactionIndex)
+		setLastHandledTransaction(post.transactionIndex);
 }
 
 function writeACommentInTheQueue(ownUser) {

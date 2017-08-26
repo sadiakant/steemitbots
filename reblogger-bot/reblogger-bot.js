@@ -4,16 +4,28 @@
 
 /////////////
 
-var MIN_REPUTATION = 5;
+var MIN_REPUTATION = 0;
 
 var botUserData = require("./userData.json")
 
-var URL_TO_INTRODUCTION_POST = "https://steemit.com/----------------------------------------------------------";
+var URL_TO_INTRODUCTION_POST = "https://steemit.com/resteembot/@reblogger/reblogger-new-resteeming-bot-based-on-resteembot";
 
-var ADVERTISMENT_COMENT = "Hi. I am a bot that upvoted you.\n" +
-	"Your post was chosen at random, as part of my advertisment campaign.\n" +
-	"I can also re-steem and upvote some of your other posts\n" +
-	"If you want to read more - [read the introduction post](" + URL_TO_INTRODUCTION_POST + ").";
+var SECOND = 1000;
+var MINUTE = 60 * SECOND;
+var HOUR = 60 * MINUTE;
+var MUST_FOLLOW_SINCE = 7 * MINUTE;
+var ADVERTISMENT_PERIOD = HOUR;
+
+var ADVERTISMENT_UNTIL_STR = "2017-09-01 00:00:01 +00:00";
+var LOCAL_TIMEZONE = -(new Date().getTimezoneOffset()) * MINUTE;
+var STEEM_TIMEZONE = 7 * HOUR;
+var ADVERTISE_UNTIL_UTC = Date.parse(ADVERTISMENT_UNTIL_STR);
+var ADVERTISE_UNTIL_LOCAL = ADVERTISE_UNTIL_UTC + (LOCAL_TIMEZONE);
+
+var ADVERTISMENT_COMENT = "Whatever @resteembot resteems, I resteem too!\n" +
+	"I am a new, simple to use and cheap resteeming bot\n" +
+	"I will automatically resteem posts resteemed by @resteembot until " + ADVERTISMENT_UNTIL_STR + "\n" + 
+	"If you want to read more about me, [read my introduction post](" + URL_TO_INTRODUCTION_POST + ").";
 
 var RESTEEM_COMMENT = "This post was resteemed by @" + botUserData.name + "!\n" +
 	"Good Luck!\n" +
@@ -22,16 +34,11 @@ var RESTEEM_COMMENT = "This post was resteemed by @" + botUserData.name + "!\n" 
 
 var RESTEEMED_THANKS_TO = "\n Your post was resteemed thanks to @";
 
-var LATE_RESTEEM_COMMENT = "This post was resteemed manually.\n" +
-	"You either didn't follow @" + botUserData.name + ", or didn't wait 3 hours before using the service.\n" +
-	"Your post was resteemed anyway, because you made a bigger transaction than usual.\n" +
-	"Thank you for your donation.";
-
-var URL_TO_VOTING_LOTTERY_POST = "https://steemit.com/------------------------------------------------------------";
-var URL_TO_LOGO = "https://s1.postimg.org/6thlrit1r/Resteem_Bot_-_100.png";
+var URL_TO_VOTING_LOTTERY_POST = URL_TO_INTRODUCTION_POST;
+var URL_TO_LOGO = "https://s2.postimg.org/vrm6bzo09/bot2_100.pngs";
 
 var WINNER_COMMENT = "You were lucky! Your post was selected for an upvote!"
-	+ "\n[Read about that initiative](" + URL_TO_VOTING_LOTTERY_POST + ")"
+	+ "\n[Read about the bot](" + URL_TO_VOTING_LOTTERY_POST + ")"
 	+ "\n![logo](" + URL_TO_LOGO + ")";
 
 var WINNER_MEMO = "A post of yours was randomly upvoted by @" + botUserData.name
@@ -44,11 +51,6 @@ var WINNER_VOTING_POWER = 10000;
 var fs = require('fs');
 var steem = require('steem');
 
-var SECOND = 1000;
-var MINUTE = 60 * SECOND;
-var HOUR = 60 * MINUTE;
-var MUST_FOLLOW_SINCE = 7 * MINUTE;
-
 var STEEMITURL = "https://steemit.com/";
 var LAST_TRANSACTION_FILEPATH = "./lastHandledTransaction.json";
 var FOLLOWERS_FILEPATH = "./followers.json";
@@ -60,7 +62,7 @@ var lastHandledTransaction = require(LAST_TRANSACTION_FILEPATH).index;
 
 var countOfResteemsIn24Hours = 5000;
 
-var resteemPrice = 0.05;
+var RESTEEM_PRICE = 0.05;
 
 var votequeue = [];
 var resteemqueue = [];
@@ -80,6 +82,10 @@ updateFollowerList();
 setInterval(function () { updateFollowerList(); }, MUST_FOLLOW_SINCE);
 
 setInterval(function () { checkForNewTransactions() }, 10 * SECOND);
+
+setInterval(function () {
+	if(new Date() < ADVERTISE_UNTIL_LOCAL + HOUR + HOUR) advertiseOnResteemBotsResteems("resteembot");
+}, ADVERTISMENT_PERIOD);
 
 setInterval(function () { resteemAPostsInTheQueue(botUser); }, 1 * SECOND);
 
@@ -139,8 +145,8 @@ function checkForNewTransactions() {
 			}
 
 			var resteemsOwnPost = transaction.from === transaction.author;
-			if (transaction.amount < resteemPrice - 0.001) {
-				var message = transaction.from + " paid " + transaction.amountStrFull + " but the minimum price is " + resteemPrice.toFixed(3);
+			if (transaction.amount < RESTEEM_PRICE - 0.001) {
+				var message = transaction.from + " paid " + transaction.amountStrFull + " but the minimum price is " + RESTEEM_PRICE.toFixed(3);
 				logPublically(message, transaction.from, transaction.amountStr, transaction.currency);
 				continue;
 			}
@@ -211,6 +217,43 @@ function updateFollowerList(lastFollowerUsername) {
 		} else {
 			log(err);
 		}
+	});
+}
+
+function advertiseOnResteemBotsResteems(resteembotUsername) {
+	var from = new Date() - ADVERTISMENT_PERIOD;
+
+	console.log("Advertising on posts resteemed since : " + new Date(from).toString());
+
+	steem.api.getAccountHistory(resteembotUsername, 99999999, 500, function (err, accountHistory) {
+		var foundResteems = [];
+		for (var i in accountHistory) {
+
+			var historyItem = accountHistory[i];
+			var op = historyItem[1].op;
+			if (JSON.stringify(op).indexOf("reblog") == -1)
+				continue;
+
+			try {
+				var resteemOp = JSON.parse(op[1].json)[1];
+			} catch (error) {
+				continue;
+			}
+
+			resteemOp.timestamp = historyItem[1].timestamp;
+			resteemOp.date = Date.parse(resteemOp.timestamp);
+
+			if (resteemOp.date < from) 
+				continue;
+
+			foundResteems.push(resteemOp);
+		}
+
+		log("Found " + foundResteems.length + " posts resteemed by @" + resteembotUsername + " since " + new Date(from).toString());
+		foundResteems.forEach(function(resteem) {
+			resteemqueue.push({ author: resteem.author, permlink: resteem.permlink, transactionIndex: undefined });
+			commentqueue.push({ author: resteem.author, permlink: resteem.permlink, body: ADVERTISMENT_COMENT });
+		}, this);
 	});
 }
 
@@ -308,15 +351,17 @@ function countResteemsIn24Hours() {
 		var foundResteems = [];
 		for (var i in accountHistory) {
 
-			if (!accountHistory.hasOwnProperty(i))
-				continue;
-
 			var historyItem = accountHistory[i];
 			var op = historyItem[1].op;
 			if (JSON.stringify(op).indexOf("reblog") == -1)
 				continue;
 
-			var resteemOp = JSON.parse(op[1].json)[1];
+			try {
+				var resteemOp = JSON.parse(op[1].json)[1];
+			} catch (error) {
+				continue;
+			}
+
 			resteemOp.date = Date.parse(historyItem[1].timestamp);
 
 			if (resteemOp.date < from) continue;
@@ -373,7 +418,8 @@ function resteemAPostsInTheQueue(ownUser) {
 	var post = resteemqueue.shift();
 	resteemPost(ownUser, post.author, post.permlink);
 
-	setLastHandledTransaction(post.transactionIndex);
+	if(post.transactionIndex)
+		setLastHandledTransaction(post.transactionIndex);
 }
 
 function writeACommentInTheQueue(ownUser) {
