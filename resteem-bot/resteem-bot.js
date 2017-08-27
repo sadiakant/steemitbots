@@ -176,7 +176,7 @@ function checkForNewTransactions() {
 			
 			log("Transaction detected: " + transaction.from + " payed [" + transaction.amountStrFull + "] with memo " + transaction.memo);
 			
-			var thanksTo = (resteemsOwnPost ? null : RESTEEMED_THANKS_TO + transaction.from);
+			var thanksTo = (resteemsOwnPost ? "" : RESTEEMED_THANKS_TO + transaction.from);
 			resteemqueue.push({ author: transaction.author, permlink: transaction.permlink, transactionIndex: transaction.index });
 			commentqueue.push({ author: transaction.author, permlink: transaction.permlink, body: RESTEEM_COMMENT + thanksTo });
 			checkIfPostIsLuckyEnoughToBeUpvoted(transaction);
