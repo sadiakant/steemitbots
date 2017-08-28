@@ -28,6 +28,9 @@ var RESTEEM_COMMENT = "This post was resteemed by @" + botUserData.name + "!\n" 
 
 var RESTEEMED_THANKS_TO = "\n Your post was resteemed thanks to @";
 
+var OTHER_RESTEEMED_CONTENT = "\nCheck out the other content resteemed by @" + botUserData.name + ".\n"
+	+ "Some of it is really cool!";
+
 var LATE_RESTEEM_COMMENT = "This post was resteemed manually.\n" +
 	"You either didn't follow @" + botUserData.name +", or didn't wait 3 hours before using the service.\n" +
 	"Your post was resteemed anyway, because you made a bigger transaction than usual.\n" +
@@ -176,9 +179,10 @@ function checkForNewTransactions() {
 			
 			log("Transaction detected: " + transaction.from + " payed [" + transaction.amountStrFull + "] with memo " + transaction.memo);
 			
-			var thanksTo = (resteemsOwnPost ? "" : RESTEEMED_THANKS_TO + transaction.from);
+			var thanksToMessage = (resteemsOwnPost ? "" : RESTEEMED_THANKS_TO + transaction.from);
+			var otherContentMessage = OTHER_RESTEEMED_CONTENT + ""; // add last post here
 			resteemqueue.push({ author: transaction.author, permlink: transaction.permlink, transactionIndex: transaction.index });
-			commentqueue.push({ author: transaction.author, permlink: transaction.permlink, body: RESTEEM_COMMENT + thanksTo });
+			commentqueue.push({ author: transaction.author, permlink: transaction.permlink, body: RESTEEM_COMMENT + thanksToMessage + otherContentMessage});
 			checkIfPostIsLuckyEnoughToBeUpvoted(transaction);
 			
 			setLastHandledTransaction(transaction.index);
