@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Greet Bot!</title>
+</head>
+
+<body style="background-color:lightgrey">
+    <div style="text-align: center">
+      <p>
+        <div>
+          <img alt="logo" src="./logo.jpg" />
+          <h1 style="display: inline-block;">Greet Bot!</h1>
+          <img alt="logo" src="./logo.jpg" /></div>
+        This is a bot made by <span style="color:blue;">@investigation</span>,<br/> 
+        It will find recent posts and greet them with comments, tips, resteems and upvotes.<br/>
+      </p>
+    </div>
+    <hr/>
+
+    <p title=
+"User credentials are required.
+Use the main password, since both transactions and posting permissions are needed.">
+        <strong>Username: </strong><input id="username-input" /> <br/>
+        <strong>Password: </strong><input id="password-input" type="password" /> <br/>
+    </p>
+    <hr/>
+
+    <p>
+        <h3>Settings :</h3>
+        Category : <select id="category-selecter">
+          <option>[ ANY CATEGORY ]</option>
+        <optgroup label="Popular" id="popular-categories"> </optgroup>
+        <optgroup label="Other" id="other-categories"> </optgroup>
+        </select>
+        <script>
+            (function () {
+                var importantCategories = [
+                  'introduceyourself', 'life', 'photography', 'steemit', 'art', 
+                  'kr', 'travel', 'bitcoin', 'blog', 'food', 'cryptocurrency'];
+                var otherCategories = [
+                  'spanish', 'news', 'steem', 'nature', 'funny', 'story', 'writing', 'cn', 'money', 'colorchallenge', 'dtube', 'music',
+                  'health', 'poetry', 'love', 'video', 'politics', 'science', 'crypto', 'contest', 'deutsch', 'indonesia', 'technology',
+                  'blockchain', 'meme', 'photo', 'aceh', 'philosophy', 'history', 'introducemyself', 'drawing', 'fun', 'ethereum',
+                  'steemit-health', 'sports', 'animals', 'gaming', 'steemsilvergold'
+                ];
+        
+                var popularsGroup = document.getElementById("popular-categories");
+                var othersGroup = document.getElementById("other-categories");
+        
+                for (var i in importantCategories) {
+                  var el = document.createElement("option")
+                  el.innerHTML = importantCategories[i];
+                  popularsGroup.appendChild(el);
+                }
+        
+                for (var i in otherCategories) {
+                  var el = document.createElement("option")
+                  el.innerHTML = otherCategories[i];
+                  othersGroup.appendChild(el);
+                }
+        
+              })();
+        </script>
+        <br/> 
+        <div title=
+"If the default settings are used, and every 30 minutes the bot processes 10 posts,
+that means that a total of 480 posts will be checked per day. All of this
+If restrictions are set, then some of these posts will be ignorred.
+
+If you want to resteem as many posts as possible, simply set the minutes to 1, and the processed posts to 50.
+Do not worry. The bot will not process the same posts twice.">
+        Scan every <input type="number" value="30" min="1" max="1000" id="scan-period-input" /> minutes<br/> 
+        Process <input type="number" value="10" min="1" max="50" id="processed-post-count-input"  /> posts on each run.
+      </div>
+    </p>
+    <hr/>
+    <script>
+        function refreshVisibilityToggle(checkboxId, toggleContainerId){
+          var checkbox = document.getElementById(checkboxId);
+          var visible = checkbox.checked;
+          var toggleContainer = document.getElementById(toggleContainerId);
+          if(!visible)
+            toggleContainer.style.display = 'none';
+          else
+            toggleContainer.style.display = '';
+        }
+    </script>
+
+    <p>
+        <input type="checkbox" name="doRestrict" id="doRestrict" onclick="refreshVisibilityToggle('doRestrict', 'restrict-visility-toggle')">
+        <label for="doRestrict"><strong>Restrictions!</strong></label></input>
+        <div id="restrict-visility-toggle">
+          <div title="Ignore posts of users with too low reputation (min 0).">
+            Min reputation : <input type="number" min="0" max=100 value="0" id="min-reputation-input" />
+          </div>
+          <div title="Ignore posts of users with too high reputation (max 100).">
+            Max reputation : <input type="number" min="0" max=100 value="100" id="max-reputation-input" /></div>
+          <div title="Ignore posts that are too short.">
+            Min post length : <input type="number" min="0" max=100 value="200" id="min-post-length-input" /> charachers</div>
+          <div title="Separate keywords with commas.
+Posts that don't contain at least one of the keywords will be ignored.
+Leave empty for no filtering by keywords.">
+            Required Keywords : <input type="text" min="0" max=100 value="" placeholder="cats, shoes, etc.." id="mentioned-keywords-input"
+            />
+          </div>
+        </div>
+    </p>
+    <hr/><p>
+      <input type="checkbox" name="doUpvote" id="doUpvote" onclick="refreshVisibilityToggle('doUpvote', 'upvote-visility-toggle')">
+      <label for="doUpvote"><strong>Upvote!</strong></label></input>
+      <div id="upvote-visility-toggle">
+        <script>
+          function updateUpvoteLabel() {
+            var newValue = document.getElementById("upvote-power-input").value;
+            document.getElementById("upvote-power-label").innerHTML = newValue;
+          }
+        </script>
+        <div title="Max=100% (If your SP is low it is recommended to keep it at 100%)">
+          Voting Power : <input id="upvote-power-input" type="range" onchange="updateUpvoteLabel();" value="100" step="0.25"
+            max="100" min="0.25">
+          <span id="upvote-power-label">100</span> % </div>
+        </input>
+        </div>
+    </p>
+    <hr/>
+
+    <p>
+        <input type="checkbox" name="doComment" id="doComment" onclick="refreshVisibilityToggle('doComment', 'comment-visility-toggle')">
+        <label for="doComment"><strong>Comment!</strong></label></input>
+        <div id="comment-visility-toggle" title="%AUTHOR will be replaced with the name of the actual aouthor of the post.">
+            Comment body : <br/>
+            <textarea cols="60" rows="6" id="comment-body-input">Nice to meet you, @%AUTHOR!</textarea>
+        </div>
+    </p>
+    <hr/>
+
+    <p>
+        <input type="checkbox" name="doTip" id="doTip" onclick="refreshVisibilityToggle('doTip', 'tip-visility-toggle')">
+        <label for="doTip"><strong>Tip!</strong></label></input>
+        <div id="tip-visility-toggle" title="Do not activate this, unless you have the money needed.">
+            Amount : <input type="number" value="0.001" step="0.001" min="0.001" id="tip-amount-input" /> (SBD) <br/>
+            Memo : <input type="text" placeholder="public memo" id="tip-memo-input" value="You received a tip!" />
+        </div>
+    </p>
+    <hr/>
+
+    <p>
+      <input type="checkbox" name="doResteem" id="doResteem"><label for="doResteem">
+        <strong>Resteem!</strong></label>
+      </input>
+    </p>
+    <hr/>
+
+    <p>
+      <input type="checkbox" name="doFollow" id="doFollow">
+        <label for="doFollow"><strong>Follow!</strong></label>
+      </input>
+    </p>
+    <hr/>
+
+    <script>
+      function refreshAllVisibilityToggles(){
+        refreshVisibilityToggle("doRestrict", "restrict-visility-toggle");
+        refreshVisibilityToggle("doUpvote", "upvote-visility-toggle");
+        refreshVisibilityToggle("doComment", "comment-visility-toggle");
+        refreshVisibilityToggle("doTip", "tip-visility-toggle");
+      }
+      refreshAllVisibilityToggles();
+    </script>
+
+    <p style="text-align:center; margin:auto;">
+        <button id="save-button" title="load the previously saved settings">Save</button>
+        <button id="load-button" title="load the previously saved settings">Load</button>
+        <br/><br/>
+        <button id="start-button"><h1>START !</h1></button>
+    </p>
+    <hr/>
+
+</body>
+
+<script>
+      var fs = require('fs');
+
+      function getSelectedOption(selecterId) {
+        var dd = document.getElementById(selecterId);
+        if (dd.selectedIndex == -1)
+          return null;
+        return dd.options[dd.selectedIndex].text;
+      }
+
+      function setSelectedOption(selecterId, textToFind) {
+        var dd = document.getElementById(selecterId);
+        for (var i = 0; i < dd.options.length; i++) {
+          if (dd.options[i].text === textToFind) {
+            dd.selectedIndex = i;
+            break;
+          }
+        }
+      }
+
+      function readValues() {
+        var settings = {
+          name: document.getElementById("username-input").value,
+          password: document.getElementById("password-input").value,
+
+          category: getSelectedOption("category-selecter"),
+          scanPeriodMinutes: document.getElementById("scan-period-input").value,
+          processedPostCount: document.getElementById("processed-post-count-input").value,
+
+          doRestrict: document.getElementById("doRestrict").checked,
+          minReputation: document.getElementById("min-reputation-input").value,
+          maxReputation: document.getElementById("max-reputation-input").value,
+          minPostLength: document.getElementById("min-post-length-input").value,
+          requiredKeywords: document.getElementById("mentioned-keywords-input").value,
+
+          doUpvote: document.getElementById("doUpvote").checked,
+          upvotePowerPercentage: document.getElementById("upvote-power-input").value,
+
+          doComment: document.getElementById("doComment").checked,
+          commentBody: document.getElementById("comment-body-input").value,
+
+          doTip: document.getElementById("doTip").checked,
+          tipAmount: document.getElementById("tip-amount-input").value,
+          tipMemo: document.getElementById("tip-memo-input").value,
+
+          doResteem: document.getElementById("doResteem").checked,
+
+          doFollow: document.getElementById("doFollow").checked,
+        };
+        return settings;
+      }
+
+      function writeLoadedValues(settings) {
+        document.getElementById("username-input").value = settings.name;
+        document.getElementById("password-input").value = settings.password;
+
+        setSelectedOption("category-selecter", settings.category);
+        document.getElementById("scan-period-input").value = settings.scanPeriodMinutes;
+        document.getElementById("processed-post-count-input").value = settings.processedPostCount;
+
+        document.getElementById("doRestrict").checked = settings.doRestrict;
+        document.getElementById("min-reputation-input").value = settings.minReputation;
+        document.getElementById("max-reputation-input").value = settings.maxReputation;
+        document.getElementById("min-post-length-input").value = settings.minPostLength;
+        document.getElementById("mentioned-keywords-input").value = settings.requiredKeywords;
+
+        document.getElementById("doUpvote").checked = settings.doUpvote;
+        document.getElementById("upvote-power-input").value = settings.upvotePowerPercentage;
+
+        document.getElementById("doComment").checked = settings.doComment;
+        document.getElementById("comment-body-input").value = settings.commentBody;
+
+        document.getElementById("doTip").checked = settings.doTip;
+        document.getElementById("tip-amount-input").value = settings.tipAmount;
+        document.getElementById("tip-memo-input").value = settings.tipMemo;
+
+        document.getElementById("doResteem").checked = settings.doResteem;
+
+        document.getElementById("doFollow").checked = settings.doFollow;
+      }
+
+      function validateValues(settings) {
+        var problem = "There is a problem with the field ";
+
+        if (!settings.name || !settings.password)
+          throw new Error("Username and Password can't be empty");
+
+        if (settings.category === "[ ANY CATEGORY ]")
+          settings.category = null;
+
+        try { settings.scanPeriodMinutes = parseFloat(settings.scanPeriodMinutes); } 
+        catch (er) { throw new Error(problem + "scanPeriodMinutes"); }
+        
+        try { settings.processedPostCount = parseFloat(settings.processedPostCount); } 
+        catch (er) { throw new Error(problem + "processedPostCount"); }
+        
+        try { settings.minReputation = parseFloat(settings.minReputation); }
+        catch (er) { throw new Error(problem + "minReputation"); }
+        
+        try { settings.maxReputation = parseFloat(settings.maxReputation); } 
+        catch (er) { throw new Error(problem + "maxReputation"); }
+        
+        try { settings.minPostLength = parseFloat(settings.minPostLength); } 
+        catch (er) { throw new Error(problem + "minPostLength"); }
+        
+        if(settings.requiredKeywords)
+          try { settings.requiredKeywords = settings.requiredKeywords.split(",").map(function (el) { return el.trim(); }); }
+          catch (er) { throw new Error(problem + "requiredKeywords"); }
+        
+        try { settings.upvotePowerPercentage = parseFloat(settings.upvotePowerPercentage); } 
+        catch (er) { throw new Error(problem + "upvotePowerPercentage"); }
+        
+        if (settings.doComment && !settings.commentBody)
+          throw new Error("Comment body can't be empty");
+
+        try { settings.tipAmount = parseFloat(settings.tipAmount); } 
+        catch (er) { throw new Error(problem + "tipAmount"); }
+
+        if(!settings.doUpvote &&
+          !settings.doComment &&
+          !settings.doTip &&
+          !settings.doResteem &&
+          !settings.doFollow)
+          throw new Error("No action was selected!");
+
+        return settings;
+      }
+
+      function save(obj, fileName) {
+        fs.writeFile(fileName, JSON.stringify(obj, null, 2), function (err) {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log("Object saved to " + fileName);
+          }
+        });
+      }
+
+      function startBot(settings) {
+        var body = document.getElementsByTagName("body")[0];
+        body.style = "background-color:black; font-color: white; color: white;"
+        body.innerHTML = "<div id='log'><div>"
+        bot.start(settings);
+      }
+</script>
+<script src="greetbot.js"></script>
+<script>
+    document.getElementById("start-button").onclick = function () {
+      var settings = {};
+      try {
+        settings = validateValues(readValues());
+      } catch (error) {
+        alert(error.message);
+        return;
+      }
+      startBot(settings);
+    }
+
+    document.getElementById("load-button").onclick = function () {
+      var settings = {};
+      try {
+        var str = fs.readFileSync("./settings.json");
+        settings = JSON.parse(str);
+        writeLoadedValues(settings);
+        refreshAllVisibilityToggles();
+      } catch (error) {
+        alert(error.message);
+        return;
+      }
+    }
+
+    document.getElementById("save-button").onclick = function () {
+      var settings = {};
+      try {
+        settings = readValues();
+      } catch (error) {
+        alert(error.message);
+        return;
+      }
+      save(settings, "./settings.json");
+    }</script>
+</html>
