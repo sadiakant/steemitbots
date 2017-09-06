@@ -13,6 +13,7 @@ var MIN_ADVERTISMENT_REPUTATION = 15,
 	MAX_ADVERTISMENT_REPUTATION = 45;
 
 var URL_TO_INTRODUCTION_POST = "https://steemit.com/resteembot/@resteembot/how-to-use-resteembot-updated-2017824t202525149z";
+var REBLOGGER_INTRODUCTION_POST = "https://steemit.com/resteembot/@reblogger/reblogger-new-resteeming-bot-based-on-resteembot";
 
 var ADVERTISMENT_COMENT = "Hi. I am a bot that upvoted you.\n" +
 	"Your post was chosen at random, as part of my advertisment campaign.\n" +
@@ -24,12 +25,13 @@ var ADVERTISMENT_COMENT = "Hi. I am a bot that upvoted you.\n" +
 var RESTEEM_COMMENT = "This post was resteemed by @" + botUserData.name + "!\n" +
 	"Good Luck!\n"+
 	"\n" +
-	"Learn more about the @" + botUserData.name + " project [in the introduction post](" + URL_TO_INTRODUCTION_POST + ").";
+	"Learn more about the @" + botUserData.name + " project [in the introduction post](" + URL_TO_INTRODUCTION_POST + ")." +
+	"\n" + "Also - check out @reblogger, by reading [this post](" + REBLOGGER_INTRODUCTION_POST + ").";
 
 var RESTEEMED_THANKS_TO = "\n Your post was resteemed thanks to @";
 
-var OTHER_RESTEEMED_CONTENT = "\nCheck out the other content resteemed by @" + botUserData.name + ".\n"
-	+ "Some of it is really cool!";
+var OTHER_RESTEEMED_CONTENT = "\n\n-----\n\nCheck out the other content resteemed by @" + botUserData.name + ".\n"
+	+ "Some of it is really cool!\n\n-----";
 
 var LATE_RESTEEM_COMMENT = "This post was resteemed manually.\n" +
 	"You either didn't follow @" + botUserData.name +", or didn't wait 3 hours before using the service.\n" +
@@ -137,16 +139,6 @@ function checkForNewTransactions() {
 			{ 
 				logPublically(transaction.from + " is not a follower, or 3 hours haven't passed since following", 
 					transaction.from, transaction.amountStr, transaction.currency);
-
-				if (transaction.amount >= 1) {
-					log(transaction.author + "'s post will be resteemed after 10 minutes.");
-					setTimeout(function() {
-						log(transaction.author + "'s post is being resteemed.");
-						resteemqueue.push({ author: transaction.author, permlink: transaction.permlink, transactionIndex: transaction.index });
-						commentqueue.push({ author: transaction.author, permlink: transaction.permlink, body: LATE_RESTEEM_COMMENT });
-					}, 10 * MINUTE);  
-				}
-				
 				continue;
 			}
 
