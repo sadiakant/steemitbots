@@ -1,0 +1,17 @@
+{
+  "name": "trader-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "trader-bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "start"
+  ],
+  "author": "AND",
+  "license": "ISC",
+  "dependencies": {
+    "steem": "^0.6.3"
+  }
+}
