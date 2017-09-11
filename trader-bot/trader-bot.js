@@ -16,20 +16,32 @@ setInterval(function (params) { runTradeBot(); }, 30 * MINUTE);
 function runTradeBot() {
     steem.api.getFeedHistory(function (err, result) {
         var marketData = extractMarketData(result);
-        log("---> Running trade bot. Current price: " + marketData.current);
 
-        if(marketData.current > marketData.sell) 
-            sell(marketData);
-        else if(marketData.current < marketData.buy) 
-            buy(marketData);
-        else 
-            log("It is not the time to act.");
+        steem.api.getOrderBook(1, function(err2, orders) {
+            marketData.currentAsk = parseFloat(orders.asks[0].real_price);
+            marketData.currentBid = parseFloat(orders.bids[0].real_price);
+
+            marketData.current = (marketData.currentAsk + marketData.currentBid) / 2;
+
+            log("---> Running trade bot. Current price: " + marketData.current);
+
+            if(marketData.current > marketData.sell) {
+                sell(marketData);
+            }
+            else if(marketData.current < marketData.buy) {
+                buy(marketData);
+            }
+            else {
+                log("It is not the time to act.");
+            }
+        });
+
     });
 }
 
 function extractMarketData(result) {
 
-    current = parseFloat(result.current_median_history.base.split(' ')[0]);
+    var currentAvg = parseFloat(result.current_median_history.base.split(' ')[0]);
 
     var min = 9999999;
     var max = -1;
@@ -56,7 +68,7 @@ function extractMarketData(result) {
     middle = (max + min) / 2;
 
     return {
-        current: current,
+        currentAvg: currentAvg,
         min: min,
         max: max,
         median: median,
@@ -101,7 +113,14 @@ function sell(marketData) {
         }
 
         var amountToSell = user.balance;
-        var minToReceive = (sellBalance * marketData.current).toFixed(3) + " SBD";
+        var receive = (sellBalance * marketData.currentBid).toFixed(3);
+        var minToReceive = receive + " SBD";
+
+        marketData._Operation = "[SELL]"
+        marketData.amountToSell = amountToSell;
+        marketData.minToReceive = minToReceive;
+        
+        console.log(marketData);
 
         createOrder(amountToSell, minToReceive);
     });
@@ -120,7 +139,14 @@ function buy(marketData) {
         }
 
         var amountToSell = user.sbd_balance;
-        var minToReceive = (buyBalance * marketData.current).toFixed(3) + " STEEM";
+        var receive = (buyBalance / marketData.currentAsk).toFixed(3);
+        var minToReceive = receive + " STEEM";
+
+        marketData._Operation = "[BUY]"
+        marketData.amountToSell = amountToSell;
+        marketData.minToReceive = minToReceive;
+        
+        console.log(marketData);
 
         createOrder(amountToSell, minToReceive);
     });
