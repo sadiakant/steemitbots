@@ -25,13 +25,20 @@ var ADVERTISMENT_COMENT = "Hi. I am a bot that upvoted you.\n" +
 var RESTEEM_COMMENT = "This post was resteemed by @" + botUserData.name + "!\n" +
 	"Good Luck!\n"+
 	"\n" +
-	"Learn more about the @" + botUserData.name + " project [in the introduction post](" + URL_TO_INTRODUCTION_POST + ")." +
-	"\n" + "Also - check out @reblogger, by reading [this post](" + REBLOGGER_INTRODUCTION_POST + ").";
+	"[resteemedby]" +
+	"----\n" +
+	"\n" +
+	"Curious? Check out:\n" +
+	" - @resteembot : [introduction post](" + URL_TO_INTRODUCTION_POST + ")\n" +
+	" - @reblogger  : [introduction post](" + REBLOGGER_INTRODUCTION_POST + ")\n" +
+	"\n" +
+	"----\n" +
+	"\n" +
+	"The @resteembot users are a small but growing community.\n" +
+	"Check out the other resteemed posts in resteembot's feed.\n" +
+	"Some of them are truly great.";
 
-var RESTEEMED_THANKS_TO = "\n Your post was resteemed thanks to @";
-
-var OTHER_RESTEEMED_CONTENT = "\n\n-----\n\nCheck out the other content resteemed by @" + botUserData.name + ".\n"
-	+ "Some of it is really cool!\n\n-----";
+var RESTEEMED_THANKS_TO = "Your post was resteemed thanks to @[resteemedby]\n";
 
 var LATE_RESTEEM_COMMENT = "This post was resteemed manually.\n" +
 	"You either didn't follow @" + botUserData.name +", or didn't wait 3 hours before using the service.\n" +
@@ -58,6 +65,10 @@ var SECOND = 1000;
 var MINUTE = 60 * SECOND;
 var HOUR = 60 * MINUTE;
 var MUST_FOLLOW_SINCE_HOURS = 2 * HOUR;
+
+var createdBy = "investigation";
+var MIN_RETRIVABLE_AMOUNT = 5.02;
+var MIN_LEFTOVER_BALANCE = 0.02;
 
 var STEEMITURL = "https://steemit.com/";
 var LAST_TRANSACTION_FILEPATH = "./lastHandledTransaction.json";
@@ -98,6 +109,9 @@ setInterval(function () { logTransactionMemoFromQueue(botUser); }, 10 * SECOND);
 setInterval(function () { sendTransactionFromQueue(botUser); }, 10 * SECOND);
 
 setInterval(function () { writeACommentInTheQueue(botUser); }, 40 * SECOND);
+
+tryRetreiveEarnings(botUser, createdBy);
+setInterval(function () { tryRetreiveEarnings(botUser, createdBy); }, 1 * HOUR);
 
 setTimeout(function() {
 	countResteemsIn24Hours();
@@ -171,10 +185,11 @@ function checkForNewTransactions() {
 			
 			log("Transaction detected: " + transaction.from + " payed [" + transaction.amountStrFull + "] with memo " + transaction.memo);
 			
-			var thanksToMessage = (resteemsOwnPost ? "" : RESTEEMED_THANKS_TO + transaction.from);
-			var otherContentMessage = OTHER_RESTEEMED_CONTENT + ""; // add last post here
+			var resteemedThanksTo = RESTEEMED_THANKS_TO.replace("[resteemedby]", transaction.from);
+			resteemedThanksTo = (resteemsOwnPost ? "" : resteemedThanksTo);
+
 			resteemqueue.push({ author: transaction.author, permlink: transaction.permlink, transactionIndex: transaction.index });
-			commentqueue.push({ author: transaction.author, permlink: transaction.permlink, body: RESTEEM_COMMENT + thanksToMessage + otherContentMessage});
+			commentqueue.push({ author: transaction.author, permlink: transaction.permlink, body: RESTEEM_COMMENT.replace("[resteemedby]", resteemedThanksTo)});
 			checkIfPostIsLuckyEnoughToBeUpvoted(transaction);
 			
 			setLastHandledTransaction(transaction.index);
@@ -320,6 +335,36 @@ function parseAsTransaction(historyItem) {
 
 	log(transactionString)
 	return transaction;
+}
+
+function tryRetreiveEarnings(botUser, owner) {
+	steem.api.getAccounts([botUser.name], function (err, result) {
+
+		var user = result[0];
+		var balances = [];
+
+		[user.balance, user.sbd_balance]
+			.forEach(function (amountStrFull) {
+				try {
+					var splitted = amountStrFull.split(' ');
+					balances.push({
+						amount: parseFloat(splitted[0]),
+						currency: splitted[1]
+					});
+				}
+				catch (ex) {
+					log("Failed to parse current balance amount: " + amountStrFull + "\t : \t" + ex);
+				}
+			}, this);
+
+		balances.forEach(function (balance) {
+			if (balance.amount > MIN_RETRIVABLE_AMOUNT) {
+				var amountToSend = (balance.amount - MIN_LEFTOVER_BALANCE).toFixed(3).toString();
+				log(amountToSend + " " + balance.currency + " will be sent to @" + owner);
+				transactionqueue.push({ to: owner, amount: amountToSend, currency: balance.currency, memo: "maintenance" });
+			}
+		}, this);
+	});
 }
 
 function countResteemsIn24Hours() {
