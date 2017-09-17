@@ -1,3 +1,3 @@
 :RestartingTheBot
-node reblogger-bot.js
+node resteem-bot.js
 goto :RestartingTheBot
