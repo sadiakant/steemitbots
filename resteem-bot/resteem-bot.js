@@ -15,15 +15,16 @@ var MIN_ADVERTISMENT_REPUTATION = 15,
 var URL_TO_INTRODUCTION_POST = "https://steemit.com/resteembot/@resteembot/how-to-use-resteembot-updated-2017824t202525149z";
 var REBLOGGER_INTRODUCTION_POST = "https://steemit.com/resteembot/@reblogger/reblogger-new-resteeming-bot-based-on-resteembot";
 
-var ADVERTISMENT_COMENT = "Hi. I am a bot that upvoted you.\n" +
-	"Your post was chosen at random, as part of my advertisment campaign.\n" +
+var ADVERTISMENT_COMENT = "Hi, %AUTHOR! I just resteemed your post!\n" +
 	"I can also re-steem and upvote some of your other posts\n" +
-	"If you want to read more - [read the introduction post](" + URL_TO_INTRODUCTION_POST + ").\n" +
-	"\n----\n" +
-	"PS: If your reputation is lower than " + NEWBIE_PROMOTION_MAX_REPUTATION + " re-blogging only costs 0.001 SBD"
+	"\n" +
+	"----\n" +
+	"\n" +
+	"Curious? Check out @resteembot's' [introduction post](" + URL_TO_INTRODUCTION_POST + ")\n" +
+	"PS: If your reputation is lower than " + NEWBIE_PROMOTION_MAX_REPUTATION + " re-blogging with @resteembot only costs 0.001 SBD";
 
 var RESTEEM_COMMENT = "This post was resteemed by @" + botUserData.name + "!\n" +
-	"Good Luck!\n"+
+	"Good Luck!\n" +
 	"\n" +
 	"[resteemedby]" +
 	"----\n" +
@@ -31,6 +32,7 @@ var RESTEEM_COMMENT = "This post was resteemed by @" + botUserData.name + "!\n" 
 	"Curious? Check out:\n" +
 	" - @resteembot : [introduction post](" + URL_TO_INTRODUCTION_POST + ")\n" +
 	" - @reblogger  : [introduction post](" + REBLOGGER_INTRODUCTION_POST + ")\n" +
+	" - Get more from @resteembot with the #resteembotsentme initiative\n" +
 	"\n" +
 	"----\n" +
 	"\n" +
@@ -41,7 +43,7 @@ var RESTEEM_COMMENT = "This post was resteemed by @" + botUserData.name + "!\n" 
 var RESTEEMED_THANKS_TO = "Your post was resteemed thanks to @[resteemedby]\n";
 
 var LATE_RESTEEM_COMMENT = "This post was resteemed manually.\n" +
-	"You either didn't follow @" + botUserData.name +", or didn't wait 3 hours before using the service.\n" +
+	"You either didn't follow @" + botUserData.name + ", or didn't wait 3 hours before using the service.\n" +
 	"Your post was resteemed anyway, because you made a bigger transaction than usual.\n" +
 	"Thank you for your donation.";
 
@@ -51,9 +53,9 @@ var WINNER_COMMENT = "You were lucky! Your post was selected for an upvote!"
 	+ "\n[Read about that initiative](" + URL_TO_VOTING_LOTTERY_POST + ")"
 	+ "\n![logo](https://s1.postimg.org/6thlrit1r/Resteem_Bot_-_100.png)";
 
-var WINNER_MEMO = "A post of yours was randomly upvoted by @"+ botUserData.name 
+var WINNER_MEMO = "A post of yours was randomly upvoted by @" + botUserData.name
 	+ ". Thank you for using the bot.";
-	
+
 var WINNER_VOTING_POWER = 10000;
 
 /////////////
@@ -113,10 +115,12 @@ setInterval(function () { writeACommentInTheQueue(botUser); }, 40 * SECOND);
 tryRetreiveEarnings(botUser, createdBy);
 setInterval(function () { tryRetreiveEarnings(botUser, createdBy); }, 1 * HOUR);
 
-setTimeout(function() {
+setTimeout(function () {
 	countResteemsIn24Hours();
 	setInterval(function () { countResteemsIn24Hours(); }, 1 * HOUR);
 }, getMillisecondsTill12());
+
+setInterval(function () { advertise(15, null, 30, 45, 500); }, 1 * HOUR);
 
 setInterval(function () { log("------------- [1 HOUR PASSED] -------------"); }, 1 * HOUR);
 
@@ -149,15 +153,13 @@ function checkForNewTransactions() {
 			}
 
 			var follower = followers[transaction.from];
-			if (follower === undefined || follower === null)
-			{ 
-				logPublically(transaction.from + " is not a follower, or 3 hours haven't passed since following", 
+			if (follower === undefined || follower === null) {
+				logPublically(transaction.from + " is not a follower, or 3 hours haven't passed since following",
 					transaction.from, transaction.amountStr, transaction.currency);
 				continue;
 			}
 
-			if (follower.reputation < MIN_REPUTATION) 
-			{ 
+			if (follower.reputation < MIN_REPUTATION) {
 				logPublically(transaction.author + " has too low reputation : " + follower.reputation + ". Minimum is " + MIN_REPUTATION, transaction.from);
 				continue;
 			}
@@ -182,16 +184,16 @@ function checkForNewTransactions() {
 			}
 
 			detectedTransactions++;
-			
+
 			log("Transaction detected: " + transaction.from + " payed [" + transaction.amountStrFull + "] with memo " + transaction.memo);
-			
+
 			var resteemedThanksTo = RESTEEMED_THANKS_TO.replace("[resteemedby]", transaction.from);
 			resteemedThanksTo = (resteemsOwnPost ? "" : resteemedThanksTo);
 
 			resteemqueue.push({ author: transaction.author, permlink: transaction.permlink, transactionIndex: transaction.index });
-			commentqueue.push({ author: transaction.author, permlink: transaction.permlink, body: RESTEEM_COMMENT.replace("[resteemedby]", resteemedThanksTo)});
+			commentqueue.push({ author: transaction.author, permlink: transaction.permlink, body: RESTEEM_COMMENT.replace("[resteemedby]", resteemedThanksTo) });
 			checkIfPostIsLuckyEnoughToBeUpvoted(transaction);
-			
+
 			setLastHandledTransaction(transaction.index);
 		}
 
@@ -200,16 +202,16 @@ function checkForNewTransactions() {
 	});
 }
 
-function logPublically(memo, to, amount, currency){
+function logPublically(memo, to, amount, currency) {
 	amount = amount || "0.001";
 	currency = currency || "SBD";
 
 	log(memo);
 
-	if(to === undefined || to == null)
+	if (to === undefined || to == null)
 		transactionmemosqueue.push(memo);
 	else
-		transactionqueue.push({to : to, amount : amount, currency : currency, memo : memo});
+		transactionqueue.push({ to: to, amount: amount, currency: currency, memo: memo });
 }
 
 function updateFollowerList(lastFollowerUsername) {
@@ -253,7 +255,7 @@ function updateFollowerList(lastFollowerUsername) {
 }
 
 function setLastHandledTransaction(index) {
-	if(lastHandledTransaction >= index)
+	if (lastHandledTransaction >= index)
 		return;
 
 	lastHandledTransaction = index;
@@ -310,15 +312,15 @@ function parseAsTransaction(historyItem) {
 		if (urlIndex == -1) {
 			logPublically(transaction.from + "'s memo doesn't contain a SteemIt link (" + transaction.memo + "). "
 				+ "The bot will assume that it was a donation. Thank you. "
-				+ "(If it was not a donation, feel free to contact me to settle the problem.)", 
+				+ "(If it was not a donation, feel free to contact me to settle the problem.)",
 				transaction.from);
 			return null;
 		}
 
 		var memo = transaction.memo.trim();
 
-		if(memo.indexOf("#") >= 0) {
-			logPublically("@" + botUserData.name + " can't resteem comments. Only posts can be resteemed. (your memo was : " + transaction.memo + ")", 
+		if (memo.indexOf("#") >= 0) {
+			logPublically("@" + botUserData.name + " can't resteem comments. Only posts can be resteemed. (your memo was : " + transaction.memo + ")",
 				transaction.from, transaction.amountStr, transaction.currency);
 			return null;
 		}
@@ -328,7 +330,7 @@ function parseAsTransaction(historyItem) {
 		transaction.permlink = authorAndPermlink.substring(transaction.author.length + 1);
 	}
 	catch (ex) {
-		logPublically(transaction.from + "'s memo couldn't be parsed as link (" + transaction.memo + ")", 
+		logPublically(transaction.from + "'s memo couldn't be parsed as link (" + transaction.memo + ")",
 			transaction.from, transaction.amountStr, transaction.currency);
 		return null;
 	}
@@ -378,12 +380,12 @@ function countResteemsIn24Hours() {
 
 			if (!accountHistory.hasOwnProperty(i))
 				continue;
-			
+
 			var historyItem = accountHistory[i];
 			var op = historyItem[1].op;
-			if(JSON.stringify(op).indexOf("reblog") == -1)
+			if (JSON.stringify(op).indexOf("reblog") == -1)
 				continue;
-			
+
 			try {
 				var resteemOp = JSON.parse(op[1].json)[1];
 			} catch (error) {
@@ -392,8 +394,8 @@ function countResteemsIn24Hours() {
 
 			resteemOp.date = Date.parse(historyItem[1].timestamp);
 
-			if(resteemOp.date < from) continue;
-			if(resteemOp.date > to) continue;
+			if (resteemOp.date < from) continue;
+			if (resteemOp.date > to) continue;
 
 			foundResteems.push(resteemOp);
 		}
@@ -416,7 +418,7 @@ function checkIfPostIsLuckyEnoughToBeUpvoted(postData) {
 	}
 }
 
-function getMillisecondsTill12(){
+function getMillisecondsTill12() {
 	var d = new Date();
 	d.setHours(12);
 	d.setMinutes(00);
@@ -427,6 +429,56 @@ function getMillisecondsTill12(){
 		msTo12 += 24 * HOUR
 
 	return msTo12;
+}
+
+function advertise(processedPostCount, category, minReputation, maxReputation, minPostLength) {
+
+	log("-- Looking for posts to advertise... --")
+
+	var searchOptions = { limit: processedPostCount };
+	if (category != null)
+		searchOptions.tag = category;
+
+	steem.api.getDiscussionsByCreated(searchOptions, function (e, posts) {
+
+		if (e !== null) {
+			console.log(e);
+			return;
+		}
+
+		posts = posts.reverse();
+
+		var userNames = posts.map(function (r) { return r.author; });
+		steem.api.getAccounts(userNames, function (e, users) {
+
+			if (e !== null) {
+				console.log(e);
+				return;
+			}
+
+			for (var u in users) {
+				var user = users[u];
+				var post = posts[userNames.indexOf(user.name)];
+				if (post.created <= checkForPostsSince) { continue; }
+
+				checkForPostsSince = post.created;
+
+				var reputation = steem.formatter.reputation(user.reputation);
+
+				if (minReputation > reputation) { continue; }
+				if (maxReputation < reputation) { continue; }
+
+				if (minPostLength > post.body.length) { continue; }
+
+				log("Noticed post of " + user.name + "[" + reputation + "] ==> " + STEEMITURL + post.url);
+
+				var commentBody = ADVERTISMENT_COMENT.replace("%AUTHOR", user.name);
+
+				commentqueue.push({ author: user.name, permlink: post.permlink, body: commentBody });
+				resteemqueue.push({ author: user.name, permlink: post.permlink });
+			}
+		});
+	});
 }
 
 /////////////
@@ -446,7 +498,7 @@ function resteemAPostsInTheQueue(ownUser) {
 	var post = resteemqueue.shift();
 	resteemPost(ownUser, post.author, post.permlink);
 
-	if(post.transactionIndex)
+	if (post.transactionIndex)
 		setLastHandledTransaction(post.transactionIndex);
 }
 
@@ -525,22 +577,22 @@ function resteemPost(ownUser, author, permlink) {
 	});
 }
 
-function makeTransaction(ownUser, to, amount, currency, memo){
-    steem.broadcast.transfer(ownUser.wif, ownUser.name, to, amount +" "+ currency, memo, function(err, result) {
-        if(!err && result) {
-            log("Successfull transaction from " + ownUser.name + " of " + amount + " " + currency + " to '" + to + "'");
-        } else{
-            console.log(err.message);
-        }
-    });
+function makeTransaction(ownUser, to, amount, currency, memo) {
+	steem.broadcast.transfer(ownUser.wif, ownUser.name, to, amount + " " + currency, memo, function (err, result) {
+		if (!err && result) {
+			log("Successfull transaction from " + ownUser.name + " of " + amount + " " + currency + " to '" + to + "'");
+		} else {
+			console.log(err.message);
+		}
+	});
 }
 
-function logViaTransaction(ownUser, memo){
-    steem.broadcast.transfer(ownUser.wif, ownUser.name, ownUser.name, "0.001 SBD", memo, function(err, result) {
-        if(err) {
-            console.log(err.message);
-        }
-    });
+function logViaTransaction(ownUser, memo) {
+	steem.broadcast.transfer(ownUser.wif, ownUser.name, ownUser.name, "0.001 SBD", memo, function (err, result) {
+		if (err) {
+			console.log(err.message);
+		}
+	});
 }
 
 /////////////

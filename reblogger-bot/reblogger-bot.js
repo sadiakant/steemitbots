@@ -16,16 +16,21 @@ var HOUR = 60 * MINUTE;
 var MUST_FOLLOW_SINCE = 7 * MINUTE;
 var ADVERTISMENT_PERIOD = HOUR;
 
-var ADVERTISMENT_UNTIL_STR = "2017-09-01 00:00:01 +00:00";
+var ADVERTISMENT_UNTIL_STR = "2017-10-15 00:00:01 +00:00";
 var LOCAL_TIMEZONE = -(new Date().getTimezoneOffset()) * MINUTE;
 var STEEM_TIMEZONE = 7 * HOUR;
 var ADVERTISE_UNTIL_UTC = Date.parse(ADVERTISMENT_UNTIL_STR);
 var ADVERTISE_UNTIL_LOCAL = ADVERTISE_UNTIL_UTC + (LOCAL_TIMEZONE);
 
-var ADVERTISMENT_COMENT = "Whatever @resteembot resteems, I resteem too!\n" +
-	"I am a new, simple to use and cheap resteeming bot\n" +
-	"I will automatically resteem posts resteemed by @resteembot until " + ADVERTISMENT_UNTIL_STR + "\n" + 
-	"If you want to read more about me, [read my introduction post](" + URL_TO_INTRODUCTION_POST + ").";
+var RE_RESTEEM_COMENT = "Whatever @resteembot resteems, I resteem too!\n" +
+"I am a new, simple to use and cheap resteeming bot\n" +
+"I will automatically resteem posts resteemed by @resteembot until " + ADVERTISMENT_UNTIL_STR + "\n" +
+"If you want to read more about me, [read my introduction post](" + URL_TO_INTRODUCTION_POST + ").";
+
+var ADVERTISMENT_COMENT = "Hi, %AUTHOR! I just resteemed your post!\n" +
+"I am a new, simple to use and cheap resteeming bot.\n" +
+"If you want to know more about me, [read my introduction post](" + URL_TO_INTRODUCTION_POST + ").\n" +
+"Good Luck!";
 
 var RESTEEM_COMMENT = "This post was resteemed by @" + botUserData.name + "!\n" +
 	"Good Luck!\n" +
@@ -60,6 +65,10 @@ var botUser = initUser(botUserData);
 var checkForPostsSince = ""
 var lastHandledTransaction = require(LAST_TRANSACTION_FILEPATH).index;
 
+var createdBy = "investigation";
+var MIN_RETRIVABLE_AMOUNT = 5.02;
+var MIN_LEFTOVER_BALANCE = 0.02;
+
 var countOfResteemsIn24Hours = 5000;
 
 var RESTEEM_PRICE = 0.05;
@@ -84,7 +93,7 @@ setInterval(function () { updateFollowerList(); }, MUST_FOLLOW_SINCE);
 setInterval(function () { checkForNewTransactions() }, 10 * SECOND);
 
 setInterval(function () {
-	if(new Date() < ADVERTISE_UNTIL_LOCAL + HOUR + HOUR) advertiseOnResteemBotsResteems("resteembot");
+	if (new Date() < ADVERTISE_UNTIL_LOCAL + HOUR + HOUR) advertiseOnResteemBotsResteems("resteembot");
 }, ADVERTISMENT_PERIOD);
 
 setInterval(function () { resteemAPostsInTheQueue(botUser); }, 1 * SECOND);
@@ -97,10 +106,17 @@ setInterval(function () { sendTransactionFromQueue(botUser); }, 10 * SECOND);
 
 setInterval(function () { writeACommentInTheQueue(botUser); }, 40 * SECOND);
 
+tryRetreiveEarnings(botUser, createdBy);
+setInterval(function () { tryRetreiveEarnings(botUser, createdBy); }, 1 * HOUR);
+
 setTimeout(function () {
 	countResteemsIn24Hours();
 	setInterval(function () { countResteemsIn24Hours(); }, 1 * HOUR);
 }, getMillisecondsTill12());
+
+setTimeout(function () {
+	setInterval(function () { advertise(15, null, 30, 45, 500); }, 1 * HOUR);
+}, 10 * MINUTE);
 
 setInterval(function () { log("------------- [1 HOUR PASSED] -------------"); }, 1 * HOUR);
 
@@ -243,16 +259,16 @@ function advertiseOnResteemBotsResteems(resteembotUsername) {
 			resteemOp.timestamp = historyItem[1].timestamp;
 			resteemOp.date = Date.parse(resteemOp.timestamp);
 
-			if (resteemOp.date < from) 
+			if (resteemOp.date < from)
 				continue;
 
 			foundResteems.push(resteemOp);
 		}
 
 		log("Found " + foundResteems.length + " posts resteemed by @" + resteembotUsername + " since " + new Date(from).toString());
-		foundResteems.forEach(function(resteem) {
+		foundResteems.forEach(function (resteem) {
 			resteemqueue.push({ author: resteem.author, permlink: resteem.permlink, transactionIndex: undefined });
-			commentqueue.push({ author: resteem.author, permlink: resteem.permlink, body: ADVERTISMENT_COMENT });
+			commentqueue.push({ author: resteem.author, permlink: resteem.permlink, body: RE_RESTEEM_COMENT });
 		}, this);
 	});
 }
@@ -342,6 +358,36 @@ function parseAsTransaction(historyItem) {
 	return transaction;
 }
 
+function tryRetreiveEarnings(botUser, owner) {
+	steem.api.getAccounts([botUser.name], function (err, result) {
+
+		var user = result[0];
+		var balances = [];
+
+		[user.balance, user.sbd_balance]
+			.forEach(function (amountStrFull) {
+				try {
+					var splitted = amountStrFull.split(' ');
+					balances.push({
+						amount: parseFloat(splitted[0]),
+						currency: splitted[1]
+					});
+				}
+				catch (ex) {
+					log("Failed to parse current balance amount: " + amountStrFull + "\t : \t" + ex);
+				}
+			}, this);
+
+		balances.forEach(function (balance) {
+			if (balance.amount > MIN_RETRIVABLE_AMOUNT) {
+				var amountToSend = (balance.amount - MIN_LEFTOVER_BALANCE).toFixed(3).toString();
+				log(amountToSend + " " + balance.currency + " will be sent to @" + owner);
+				transactionqueue.push({ to: owner, amount: amountToSend, currency: balance.currency, memo: "maintenance" });
+			}
+		}, this);
+	});
+}
+
 function countResteemsIn24Hours() {
 	var now = new Date();
 	var from = now - 24 * HOUR;
@@ -401,6 +447,56 @@ function getMillisecondsTill12() {
 	return msTo12;
 }
 
+function advertise(processedPostCount, category, minReputation, maxReputation, minPostLength) {
+
+	log("-- Looking for posts to advertise... --")
+
+	var searchOptions = { limit: processedPostCount };
+	if (category != null)
+		searchOptions.tag = category;
+
+	steem.api.getDiscussionsByCreated(searchOptions, function (e, posts) {
+
+		if (e !== null) {
+			console.log(e);
+			return;
+		}
+
+		posts = posts.reverse();
+
+		var userNames = posts.map(function (r) { return r.author; });
+		steem.api.getAccounts(userNames, function (e, users) {
+
+			if (e !== null) {
+				console.log(e);
+				return;
+			}
+
+			for (var u in users) {
+				var user = users[u];
+				var post = posts[userNames.indexOf(user.name)];
+				if (post.created <= checkForPostsSince) { continue; }
+
+				checkForPostsSince = post.created;
+
+					var reputation = steem.formatter.reputation(user.reputation);
+
+				if (minReputation > reputation) { continue; }
+				if (maxReputation < reputation) { continue; }
+
+				if (minPostLength > post.body.length) { continue; }
+
+				log("Noticed post of " + user.name + "[" + reputation + "] ==> " + STEEMITURL + post.url);
+
+				var commentBody = ADVERTISMENT_COMENT.replace("%AUTHOR", user.name);
+
+				commentqueue.push({ author: user.name, permlink: post.permlink, body: commentBody });
+				resteemqueue.push({ author: user.name, permlink: post.permlink });
+			}
+		});
+	});
+}
+
 /////////////
 
 function voteForAPostInTheQueue(ownUser) {
@@ -418,7 +514,7 @@ function resteemAPostsInTheQueue(ownUser) {
 	var post = resteemqueue.shift();
 	resteemPost(ownUser, post.author, post.permlink);
 
-	if(post.transactionIndex)
+	if (post.transactionIndex)
 		setLastHandledTransaction(post.transactionIndex);
 }
 
