@@ -589,6 +589,7 @@ function resteemPost(ownUser, author, permlink) {
 			log('Successful re-steem: [' + author + '] ' + permlink);
 		} else {
 			log('Failed to re-steem: ' + err);
+			logPublically('Failed to re-steem [' + author + '] : ' + err.message);
 		}
 	});
 }

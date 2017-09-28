@@ -9,6 +9,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "steem": "^0.6.2"
+    "steem": "^0.6.4"
   }
 }
