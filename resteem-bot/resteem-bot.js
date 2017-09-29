@@ -100,7 +100,7 @@ var followers = require(FOLLOWERS_FILEPATH);
 updateFollowerList();
 setInterval(function () { updateFollowerList(); }, MUST_FOLLOW_SINCE_HOURS);
 
-setInterval(function () { checkForNewTransactions() }, 10 * SECOND);
+setInterval(function () { checkForNewTransactions(); }, 10 * SECOND);
 
 setInterval(function () { resteemAPostsInTheQueue(botUser); }, 1 * SECOND);
 
@@ -529,10 +529,14 @@ function sendTransactionFromQueue(ownUser) {
 /////////////
 
 function initUser(ownUser) {
+	log("Logging in as @" + ownUser.name + "...");
+
 	var user = {
 		wif: steem.auth.toWif(ownUser.name, ownUser.password, 'owner'),
 		name: ownUser.name
 	};
+
+	log("Logged in!");
 
 	if (user.wif == undefined)
 		throw new Error("'wif' is undefined");
@@ -572,8 +576,9 @@ function resteemPost(ownUser, author, permlink) {
 		if (!err && result) {
 			log('Successful re-steem: [' + author + '] ' + permlink);
 		} else {
-			log('Failed to re-steem: ' + err);
-			logPublically('Failed to re-steem [' + author + '] : ' + err.message);
+			var alreadyResteemed = err.message.indexOf("Account has already reblogged this post")>-1;
+			logPublically('Failed to re-steem [' + author + '] : '
+				+ (alreadyResteemed ? "Account has already reblogged this post" : "Unknown Reason"));
 		}
 	});
 }
