@@ -138,7 +138,7 @@ function checkForNewTransactions() {
 
 		var detectedTransactions = 0;
 		var newItems = 0;
-
+		
 		for (var i in accountHistory) {
 
 			var doResteem = false;
@@ -195,6 +195,8 @@ function checkForNewTransactions() {
 			checkIfPostIsLuckyEnoughToBeUpvoted(transaction);
 
 			setLastHandledTransaction(transaction.index);
+
+			break; // handle transactions one by one.
 		}
 
 		if (newItems > 0 && detectedTransactions === 0)
@@ -245,7 +247,7 @@ function updateFollowerList(lastFollowerUsername) {
 			if (result.length == followerBatchSize)
 				updateFollowerList(names[names.length - 1]);
 			else {
-				setTimeout(function () { saveFollowerList(); }, 20 * SECOND)
+				saveFollowerList();
 			}
 
 		} else {
