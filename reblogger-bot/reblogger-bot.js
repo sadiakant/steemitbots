@@ -104,7 +104,7 @@ setInterval(function () { logTransactionMemoFromQueue(botUser); }, 10 * SECOND);
 
 setInterval(function () { sendTransactionFromQueue(botUser); }, 10 * SECOND);
 
-setInterval(function () { writeACommentInTheQueue(botUser); }, 60 * SECOND);
+setInterval(function () { writeACommentInTheQueue(botUser); }, 40 * SECOND);
 
 tryRetreiveEarnings(botUser, createdBy);
 setInterval(function () { tryRetreiveEarnings(botUser, createdBy); }, 1 * HOUR);
@@ -115,7 +115,7 @@ setTimeout(function () {
 }, getMillisecondsTill12());
 
 setTimeout(function () {
-	setInterval(function () { advertise(15, null, 30, 45, 500); }, 1 * HOUR);
+	setInterval(function () { advertise(5, null, 30, 45, 500); }, 15 * MINUTE);
 }, 10 * MINUTE);
 
 setInterval(function () { log("------------- [1 HOUR PASSED] -------------"); }, 1 * HOUR);
@@ -177,8 +177,6 @@ function checkForNewTransactions() {
 			checkIfPostIsLuckyEnoughToBeUpvoted(transaction);
 
 			setLastHandledTransaction(transaction.index);
-
-			break; // handle transactions one by one.
 		}
 
 		if (newItems > 0 && detectedTransactions === 0)
