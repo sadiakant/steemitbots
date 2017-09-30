@@ -104,7 +104,7 @@ setInterval(function () { logTransactionMemoFromQueue(botUser); }, 10 * SECOND);
 
 setInterval(function () { sendTransactionFromQueue(botUser); }, 10 * SECOND);
 
-setInterval(function () { writeACommentInTheQueue(botUser); }, 40 * SECOND);
+setInterval(function () { writeACommentInTheQueue(botUser); }, 60 * SECOND);
 
 tryRetreiveEarnings(botUser, createdBy);
 setInterval(function () { tryRetreiveEarnings(botUser, createdBy); }, 1 * HOUR);
@@ -172,7 +172,7 @@ function checkForNewTransactions() {
 			log("Transaction detected: " + transaction.from + " payed [" + transaction.amountStrFull + "] with memo " + transaction.memo);
 
 			var thanksTo = (resteemsOwnPost ? "" : RESTEEMED_THANKS_TO + transaction.from);
-			resteemqueue.push({ author: transaction.author, permlink: transaction.permlink, transactionIndex: transaction.index });
+			resteemqueue.push({ author: transaction.author, permlink: transaction.permlink });
 			commentqueue.push({ author: transaction.author, permlink: transaction.permlink, body: RESTEEM_COMMENT + thanksTo });
 			checkIfPostIsLuckyEnoughToBeUpvoted(transaction);
 
@@ -267,7 +267,7 @@ function advertiseOnResteemBotsResteems(resteembotUsername) {
 
 		log("Found " + foundResteems.length + " posts resteemed by @" + resteembotUsername + " since " + new Date(from).toString());
 		foundResteems.forEach(function (resteem) {
-			resteemqueue.push({ author: resteem.author, permlink: resteem.permlink, transactionIndex: undefined });
+			resteemqueue.push({ author: resteem.author, permlink: resteem.permlink });
 			commentqueue.push({ author: resteem.author, permlink: resteem.permlink, body: RE_RESTEEM_COMENT });
 		}, this);
 	});
@@ -513,9 +513,6 @@ function resteemAPostsInTheQueue(ownUser) {
 
 	var post = resteemqueue.shift();
 	resteemPost(ownUser, post.author, post.permlink);
-
-	if (post.transactionIndex)
-		setLastHandledTransaction(post.transactionIndex);
 }
 
 function writeACommentInTheQueue(ownUser) {
@@ -595,6 +592,9 @@ function resteemPost(ownUser, author, permlink) {
 			var alreadyResteemed = err.message.indexOf("Account has already reblogged this post") > -1;
 			logPublically('Failed to re-steem [' + author + '] : '
 				+ (alreadyResteemed ? "Account has already reblogged this post" : "Unknown Reason"));
+
+			if (!alreadyResteemed) 
+				log('Failed to re-steem [' + author + '] : ' + err);
 		}
 	});
 }

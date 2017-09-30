@@ -190,7 +190,7 @@ function checkForNewTransactions() {
 			var resteemedThanksTo = RESTEEMED_THANKS_TO.replace("[resteemedby]", transaction.from);
 			resteemedThanksTo = (resteemsOwnPost ? "" : resteemedThanksTo);
 
-			resteemqueue.push({ author: transaction.author, permlink: transaction.permlink, transactionIndex: transaction.index });
+			resteemqueue.push({ author: transaction.author, permlink: transaction.permlink });
 			commentqueue.push({ author: transaction.author, permlink: transaction.permlink, body: RESTEEM_COMMENT.replace("[resteemedby]", resteemedThanksTo) });
 			checkIfPostIsLuckyEnoughToBeUpvoted(transaction);
 
@@ -497,9 +497,6 @@ function resteemAPostsInTheQueue(ownUser) {
 
 	var post = resteemqueue.shift();
 	resteemPost(ownUser, post.author, post.permlink);
-
-	if (post.transactionIndex)
-		setLastHandledTransaction(post.transactionIndex);
 }
 
 function writeACommentInTheQueue(ownUser) {
@@ -579,6 +576,9 @@ function resteemPost(ownUser, author, permlink) {
 			var alreadyResteemed = err.message.indexOf("Account has already reblogged this post")>-1;
 			logPublically('Failed to re-steem [' + author + '] : '
 				+ (alreadyResteemed ? "Account has already reblogged this post" : "Unknown Reason"));
+			
+			if (!alreadyResteemed) 
+				log('Failed to re-steem [' + author + '] : ' + err);
 		}
 	});
 }
