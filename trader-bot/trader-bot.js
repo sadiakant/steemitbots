@@ -1,5 +1,8 @@
 var steem = require("steem");
 
+var steemitWSS = "wss://steemd-int.steemit.com"
+steem.api.setOptions({ url: steemitWSS });
+
 var MINUTE = 60 * 1000;
 
 ///////////////////////////////

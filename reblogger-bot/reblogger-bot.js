@@ -56,6 +56,9 @@ var WINNER_VOTING_POWER = 10000;
 var fs = require('fs');
 var steem = require('steem');
 
+var steemitWSS = "wss://steemd-int.steemit.com"
+steem.api.setOptions({ url: steemitWSS });
+
 var STEEMITURL = "https://steemit.com/";
 var LAST_TRANSACTION_FILEPATH = "./lastHandledTransaction.json";
 var FOLLOWERS_FILEPATH = "./followers.json";
@@ -132,9 +135,17 @@ function checkForNewTransactions() {
 
 	steem.api.getAccountHistory(botUser.name, 99999999, 1000, function (err, accountHistory) {
 
+		if (err) { log(err); return; }
+		
 		var detectedTransactions = 0;
 		var newItems = 0;
-
+		
+		var lastIndex = accountHistory[accountHistory.length-1][0];
+		if (lastIndex < lastHandledTransaction) {
+			log("Curent last handled transaction Id is bigger than the actual last Id. Fixing...")
+			setLastHandledTransaction(lastIndex);
+		}
+			
 		for (var i in accountHistory) {
 
 			var doResteem = false;
@@ -274,9 +285,6 @@ function advertiseOnResteemBotsResteems(resteembotUsername) {
 }
 
 function setLastHandledTransaction(index) {
-	if (lastHandledTransaction >= index)
-		return;
-
 	lastHandledTransaction = index;
 	fs.writeFile(LAST_TRANSACTION_FILEPATH, JSON.stringify({ index: index }), function (err) {
 		if (err) {

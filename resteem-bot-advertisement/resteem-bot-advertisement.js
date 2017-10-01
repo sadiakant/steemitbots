@@ -32,6 +32,9 @@ var ADVERTISMENT_COMENT = "Hi. I am a volunteer bot for @resteembot that upvoted
 
 var steem = require('steem');
 
+var steemitWSS = "wss://steemd-int.steemit.com"
+steem.api.setOptions({ url: steemitWSS });
+
 var SECOND = 1000;
 var MINUTE = 60 * SECOND;
 var HOUR = 60 * MINUTE;

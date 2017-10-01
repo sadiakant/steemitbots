@@ -63,6 +63,9 @@ var WINNER_VOTING_POWER = 10000;
 var fs = require('fs');
 var steem = require('steem');
 
+var steemitWSS = "wss://steemd-int.steemit.com"
+steem.api.setOptions({ url: steemitWSS });
+
 var SECOND = 1000;
 var MINUTE = 60 * SECOND;
 var HOUR = 60 * MINUTE;
@@ -136,9 +139,17 @@ function checkForNewTransactions() {
 
 	steem.api.getAccountHistory(botUser.name, 99999999, 1000, function (err, accountHistory) {
 
+		if (err) { log(err); return; }
+		
 		var detectedTransactions = 0;
 		var newItems = 0;
 		
+		var lastIndex = accountHistory[accountHistory.length-1][0];
+		if (lastIndex < lastHandledTransaction) {
+			log("Curent last handled transaction Id is bigger than the actual last Id. Fixing...")
+			setLastHandledTransaction(lastIndex);
+		}
+			
 		for (var i in accountHistory) {
 
 			var doResteem = false;
