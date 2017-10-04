@@ -144,12 +144,8 @@ function checkForNewTransactions() {
 		var detectedTransactions = 0;
 		var newItems = 0;
 		
-		var lastIndex = accountHistory[accountHistory.length-1][1].timestamp 
+		var lastIndex = accountHistory[accountHistory.length-1][1].timestamp
 			+ "#" + accountHistory[accountHistory.length-1][1].block;
-		if (lastIndex < lastHandledTransaction) {
-			log("Curent last handled transaction Id is bigger than the actual last Id. Fixing...")
-			setLastHandledTransaction(lastIndex);
-		}
 			
 		for (var i in accountHistory) {
 
@@ -268,9 +264,6 @@ function updateFollowerList(lastFollowerUsername) {
 }
 
 function setLastHandledTransaction(lastIndex) {
-	if (lastHandledTransaction >= lastIndex)
-		return;
-
 	lastHandledTransaction = lastIndex;
 	fs.writeFile(LAST_TRANSACTION_FILEPATH, JSON.stringify({ index: lastIndex }), function (err) {
 		if (err) {
