@@ -118,8 +118,8 @@ setTimeout(function () {
 }, getMillisecondsTill12());
 
 setTimeout(function () {
-	setInterval(function () { advertise(5, null, 30, 45, 500); }, 15 * MINUTE);
-}, 10 * MINUTE);
+	setInterval(function () { advertise(1, null, 30, 45, 500); }, 5 * MINUTE);
+}, 13 * MINUTE);
 
 setInterval(function () { log("------------- [1 HOUR PASSED] -------------"); }, 1 * HOUR);
 
@@ -140,7 +140,8 @@ function checkForNewTransactions() {
 		var detectedTransactions = 0;
 		var newItems = 0;
 		
-		var lastIndex = accountHistory[accountHistory.length-1][0];
+		var lastIndex = accountHistory[accountHistory.length-1][1].timestamp 
+			+ "#" + accountHistory[accountHistory.length-1][1].block;
 		if (lastIndex < lastHandledTransaction) {
 			log("Curent last handled transaction Id is bigger than the actual last Id. Fixing...")
 			setLastHandledTransaction(lastIndex);
@@ -151,7 +152,8 @@ function checkForNewTransactions() {
 			var doResteem = false;
 			var doUpvote = false;
 
-			if (accountHistory[i][0] <= lastHandledTransaction) continue;
+			var index = accountHistory[i][1].timestamp + "#" + accountHistory[i][1].block;
+			if (index <= lastHandledTransaction) continue;
 			else newItems++
 
 			transaction = parseAsTransaction(accountHistory[i]);
@@ -187,11 +189,11 @@ function checkForNewTransactions() {
 			commentqueue.push({ author: transaction.author, permlink: transaction.permlink, body: RESTEEM_COMMENT + thanksTo });
 			checkIfPostIsLuckyEnoughToBeUpvoted(transaction);
 
-			setLastHandledTransaction(transaction.index);
+			setLastHandledTransaction(index);
 		}
 
 		if (newItems > 0 && detectedTransactions === 0)
-			setLastHandledTransaction(accountHistory[accountHistory.length - 1][0]);
+			setLastHandledTransaction(lastIndex);
 	});
 }
 
@@ -284,13 +286,16 @@ function advertiseOnResteemBotsResteems(resteembotUsername) {
 	});
 }
 
-function setLastHandledTransaction(index) {
-	lastHandledTransaction = index;
-	fs.writeFile(LAST_TRANSACTION_FILEPATH, JSON.stringify({ index: index }), function (err) {
+function setLastHandledTransaction(lastIndex) {
+	if (lastHandledTransaction >= lastIndex)
+	return;
+
+	lastHandledTransaction = lastIndex;
+	fs.writeFile(LAST_TRANSACTION_FILEPATH, JSON.stringify({ index: lastIndex }), function (err) {
 		if (err) {
 			log(err);
 		} else {
-			log("Last interaction index (" + index + ") saved to " + LAST_TRANSACTION_FILEPATH);
+			log("Last interaction (" + lastIndex + ") saved to " + LAST_TRANSACTION_FILEPATH);
 		}
 	});
 }
@@ -312,8 +317,8 @@ function parseAsTransaction(historyItem) {
 		return null;
 
 	var transaction = historyItem[1].op[1];
-	transaction.index = historyItem[0];
 	transaction.timestamp = historyItem[1].timestamp;
+	transaction.block = historyItem[1].block;
 	transaction.type = historyItem[1].op[0];
 
 	if (transaction.from === botUser.name)
