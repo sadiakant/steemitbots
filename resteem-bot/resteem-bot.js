@@ -84,7 +84,7 @@ var botUser = initUser(botUserData);
 var checkForPostsSince = ""
 var lastHandledTransaction = require(LAST_TRANSACTION_FILEPATH).index;
 
-var countOfResteemsIn24Hours = 5000;
+var countOfResteemsIn24Hours = 150;
 
 var votequeue = [];
 var resteemqueue = [];
@@ -103,7 +103,7 @@ var followers = require(FOLLOWERS_FILEPATH);
 updateFollowerList();
 setInterval(function () { updateFollowerList(); }, MUST_FOLLOW_SINCE_HOURS);
 
-setInterval(function () { checkForNewTransactions(); }, 10 * SECOND);
+setInterval(function () { checkForNewTransactions(); }, 60 * SECOND);
 
 setInterval(function () { resteemAPostsInTheQueue(botUser); }, 1 * SECOND);
 
@@ -118,10 +118,10 @@ setInterval(function () { writeACommentInTheQueue(botUser); }, 40 * SECOND);
 tryRetreiveEarnings(botUser, createdBy);
 setInterval(function () { tryRetreiveEarnings(botUser, createdBy); }, 1 * HOUR);
 
-setTimeout(function () {
-	countResteemsIn24Hours();
-	setInterval(function () { countResteemsIn24Hours(); }, 1 * HOUR);
-}, getMillisecondsTill12());
+// setTimeout(function () {
+// 	countResteemsIn24Hours();
+// 	setInterval(function () { countResteemsIn24Hours(); }, 1 * HOUR);
+// }, getMillisecondsTill12());
 
 setInterval(function () { advertise(1, null, 30, 45, 500); }, 5 * MINUTE);
 

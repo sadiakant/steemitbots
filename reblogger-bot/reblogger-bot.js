@@ -72,7 +72,7 @@ var createdBy = "investigation";
 var MIN_RETRIVABLE_AMOUNT = 5.02;
 var MIN_LEFTOVER_BALANCE = 0.02;
 
-var countOfResteemsIn24Hours = 5000;
+var countOfResteemsIn24Hours = 50;
 
 var RESTEEM_PRICE = 0.05;
 
@@ -93,7 +93,7 @@ var followers = require(FOLLOWERS_FILEPATH);
 updateFollowerList();
 setInterval(function () { updateFollowerList(); }, MUST_FOLLOW_SINCE);
 
-setInterval(function () { checkForNewTransactions(); }, 10 * SECOND);
+setInterval(function () { checkForNewTransactions(); }, 60 * SECOND);
 
 setInterval(function () {
 	if (new Date() < ADVERTISE_UNTIL_LOCAL + HOUR + HOUR) advertiseOnResteemBotsResteems("resteembot");
@@ -112,10 +112,10 @@ setInterval(function () { writeACommentInTheQueue(botUser); }, 40 * SECOND);
 tryRetreiveEarnings(botUser, createdBy);
 setInterval(function () { tryRetreiveEarnings(botUser, createdBy); }, 1 * HOUR);
 
-setTimeout(function () {
-	countResteemsIn24Hours();
-	setInterval(function () { countResteemsIn24Hours(); }, 1 * HOUR);
-}, getMillisecondsTill12());
+// setTimeout(function () {
+// 	countResteemsIn24Hours();
+// 	setInterval(function () { countResteemsIn24Hours(); }, 1 * HOUR);
+// }, getMillisecondsTill12());
 
 setTimeout(function () {
 	setInterval(function () { advertise(1, null, 30, 45, 500); }, 5 * MINUTE);
