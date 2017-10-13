@@ -140,15 +140,19 @@ function checkForNewTransactions() {
 		var detectedTransactions = 0;
 		var newItems = 0;
 		
-		var lastIndex = accountHistory[accountHistory.length-1][1].timestamp
-			+ "#" + accountHistory[accountHistory.length-1][1].block;
+		var i = accountHistory.length-1;
+		var lastIndex = accountHistory[i][1].timestamp
+			+ "#" + accountHistory[i][1].block
+			+ "#" + accountHistory[i][0];
 			
 		for (var i in accountHistory) {
 
 			var doResteem = false;
 			var doUpvote = false;
 
-			var index = accountHistory[i][1].timestamp + "#" + accountHistory[i][1].block;
+			var index = accountHistory[i][1].timestamp 
+				+ "#" + accountHistory[i][1].block
+				+ "#" + accountHistory[i][0];
 			if (index <= lastHandledTransaction) continue;
 			else newItems++
 
