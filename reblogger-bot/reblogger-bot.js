@@ -93,7 +93,7 @@ var followers = require(FOLLOWERS_FILEPATH);
 updateFollowerList();
 setInterval(function () { updateFollowerList(); }, MUST_FOLLOW_SINCE);
 
-setInterval(function () { checkForNewTransactions(); }, 60 * SECOND);
+setInterval(function () { checkForNewTransactions(); }, 30 * SECOND);
 
 setInterval(function () {
 	if (new Date() < ADVERTISE_UNTIL_LOCAL + HOUR + HOUR) advertiseOnResteemBotsResteems("resteembot");
