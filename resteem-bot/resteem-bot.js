@@ -18,34 +18,18 @@ var REBLOGGER_INTRODUCTION_POST = "https://steemit.com/resteembot/@reblogger/reb
 var ADVERTISMENT_COMENT = "Hi, %AUTHOR! I just resteemed your post!\n" +
 	"I can also re-steem and upvote some of your other posts\n" +
 	"\n" +
-	"----\n" +
-	"\n" +
 	"Curious? Check out @resteembot's' [introduction post](" + URL_TO_INTRODUCTION_POST + ")\n" +
 	"PS: If your reputation is lower than " + NEWBIE_PROMOTION_MAX_REPUTATION + " re-blogging with @resteembot only costs 0.001 SBD";
 
-var RESTEEM_COMMENT = "This post was resteemed by @" + botUserData.name + "!\n" +
-	"Good Luck!\n" +
-	"\n" +
+var RESTEEM_COMMENT = "Resteemed by @" + botUserData.name + "! Good Luck!\n" +
 	"[resteemedby]" +
-	"----\n" +
-	"\n" +
-	"Curious? Check out:\n" +
-	" - @resteembot : [introduction post](" + URL_TO_INTRODUCTION_POST + ")\n" +
-	" - @reblogger  : [introduction post](" + REBLOGGER_INTRODUCTION_POST + ")\n" +
-	" - Get more from @resteembot with the #resteembotsentme initiative\n" +
-	"\n" +
-	"----\n" +
-	"\n" +
-	"The @resteembot users are a small but growing community.\n" +
-	"Check out the other resteemed posts in resteembot's feed.\n" +
-	"Some of them are truly great.";
+	"Curious?\n" +
+	"The @resteembot's [introduction post](" + URL_TO_INTRODUCTION_POST + ")\n" +
+	"The @reblogger's [introduction post](" + REBLOGGER_INTRODUCTION_POST + ")\n" +
+	"Get more from @resteembot with the #resteembotsentme initiative\n" +
+	"Check out the great posts I already resteemed.";
 
 var RESTEEMED_THANKS_TO = "Your post was resteemed thanks to @[resteemedby]\n";
-
-var LATE_RESTEEM_COMMENT = "This post was resteemed manually.\n" +
-	"You either didn't follow @" + botUserData.name + ", or didn't wait 3 hours before using the service.\n" +
-	"Your post was resteemed anyway, because you made a bigger transaction than usual.\n" +
-	"Thank you for your donation.";
 
 var URL_TO_VOTING_LOTTERY_POST = "https://steemit.com/resteembot/@resteembot/resteem-bot-update-day-19-new-functionality";
 
@@ -204,7 +188,11 @@ function checkForNewTransactions() {
 			resteemedThanksTo = (resteemsOwnPost ? "" : resteemedThanksTo);
 
 			resteemqueue.push({ author: transaction.author, permlink: transaction.permlink });
-			commentqueue.push({ author: transaction.author, permlink: transaction.permlink, body: RESTEEM_COMMENT.replace("[resteemedby]", resteemedThanksTo) });
+			commentqueue.push({
+				author: transaction.author,
+				permlink: transaction.permlink, 
+				body: RESTEEM_COMMENT.replace("[resteemedby]", resteemedThanksTo) 
+			});
 			checkIfPostIsLuckyEnoughToBeUpvoted(transaction);
 
 			setLastHandledTransaction(index);
@@ -329,12 +317,9 @@ function parseAsTransaction(historyItem) {
 
 		var memo = transaction.memo.trim();
 
-		if (memo.indexOf("#") >= 0) {
-			logPublically("@" + botUserData.name + " can't resteem comments. Only posts can be resteemed. (your memo was : " + transaction.memo + ")",
-				transaction.from, transaction.amountStr, transaction.currency);
-			return null;
-		}
-
+		if (memo.indexOf("#") >= 0)
+			memo = memo.substring(0, memo.indexOf("#"));
+		
 		var authorAndPermlink = memo.substring(memo.indexOf('/@') + 2)
 		transaction.author = authorAndPermlink.split('/')[0];
 		transaction.permlink = authorAndPermlink.substring(transaction.author.length + 1);

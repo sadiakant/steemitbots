@@ -16,7 +16,7 @@ var HOUR = 60 * MINUTE;
 var MUST_FOLLOW_SINCE = 7 * MINUTE;
 var ADVERTISMENT_PERIOD = HOUR;
 
-var ADVERTISMENT_UNTIL_STR = "2017-10-15 00:00:01 +00:00";
+var ADVERTISMENT_UNTIL_STR = "2017-12-26 00:00:01 +00:00";
 var LOCAL_TIMEZONE = -(new Date().getTimezoneOffset()) * MINUTE;
 var STEEM_TIMEZONE = 7 * HOUR;
 var ADVERTISE_UNTIL_UTC = Date.parse(ADVERTISMENT_UNTIL_STR);
@@ -348,12 +348,9 @@ function parseAsTransaction(historyItem) {
 
 		var memo = transaction.memo.trim();
 
-		if (memo.indexOf("#") >= 0) {
-			logPublically("@" + botUserData.name + " can't resteem comments. Only posts can be resteemed. (your memo was : " + transaction.memo + ")",
-				transaction.from, transaction.amountStr, transaction.currency);
-			return null;
-		}
-
+		if (memo.indexOf("#") >= 0)
+			memo = memo.substring(0, memo.indexOf("#"));
+	
 		var authorAndPermlink = memo.substring(memo.indexOf('/@') + 2)
 		transaction.author = authorAndPermlink.split('/')[0];
 		transaction.permlink = authorAndPermlink.substring(transaction.author.length + 1);
