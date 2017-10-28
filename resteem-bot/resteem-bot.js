@@ -109,6 +109,8 @@ setInterval(function () { tryRetreiveEarnings(botUser, createdBy); }, 1 * HOUR);
 
 setInterval(function () { advertise(1, null, 30, 45, 500); }, 5 * MINUTE);
 
+setInterval(function () { sendMoneyToFirstRecentAuthorWith(45, 65, 1000); }, 30 * MINUTE);
+
 setInterval(function () { log("------------- [1 HOUR PASSED] -------------"); }, 1 * HOUR);
 
 /////////////
@@ -124,21 +126,21 @@ function checkForNewTransactions() {
 	steem.api.getAccountHistory(botUser.name, 99999999, 1000, function (err, accountHistory) {
 
 		if (err) { log(err); return; }
-		
+
 		var detectedTransactions = 0;
 		var newItems = 0;
-		
-		var i = accountHistory.length-1;
+
+		var i = accountHistory.length - 1;
 		var lastIndex = accountHistory[i][1].timestamp
 			+ "#" + accountHistory[i][1].block
 			+ "#" + accountHistory[i][0];
-			
+
 		for (var i in accountHistory) {
 
 			var doResteem = false;
 			var doUpvote = false;
 
-			var index = accountHistory[i][1].timestamp 
+			var index = accountHistory[i][1].timestamp
 				+ "#" + accountHistory[i][1].block
 				+ "#" + accountHistory[i][0];
 			if (index <= lastHandledTransaction) continue;
@@ -190,8 +192,8 @@ function checkForNewTransactions() {
 			resteemqueue.push({ author: transaction.author, permlink: transaction.permlink });
 			commentqueue.push({
 				author: transaction.author,
-				permlink: transaction.permlink, 
-				body: RESTEEM_COMMENT.replace("[resteemedby]", resteemedThanksTo) 
+				permlink: transaction.permlink,
+				body: RESTEEM_COMMENT.replace("[resteemedby]", resteemedThanksTo)
 			});
 			checkIfPostIsLuckyEnoughToBeUpvoted(transaction);
 
@@ -319,7 +321,7 @@ function parseAsTransaction(historyItem) {
 
 		if (memo.indexOf("#") >= 0)
 			memo = memo.substring(0, memo.indexOf("#"));
-		
+
 		var authorAndPermlink = memo.substring(memo.indexOf('/@') + 2)
 		transaction.author = authorAndPermlink.split('/')[0];
 		transaction.permlink = authorAndPermlink.substring(transaction.author.length + 1);
@@ -424,6 +426,47 @@ function getMillisecondsTill12() {
 		msTo12 += 24 * HOUR
 
 	return msTo12;
+}
+
+function sendMoneyToFirstRecentAuthorWith(minReputation, maxReputation, minPostLength) {
+	log("-- Transaction Advertising --")
+
+	var searchOptions = { limit: 50 };
+
+	steem.api.getDiscussionsByCreated(searchOptions, function (e, posts) {
+
+		if (e !== null) {
+			console.log(e);
+			return;
+		}
+
+		posts = posts.reverse();
+
+		var userNames = posts.map(function (r) { return r.author; });
+		steem.api.getAccounts(userNames, function (e, users) {
+
+			if (e !== null) {
+				console.log(e);
+				return;
+			}
+
+			for (var u in users) {
+				var user = users[u];
+				var post = posts[userNames.indexOf(user.name)];
+				var reputation = steem.formatter.reputation(user.reputation);
+
+				if (minReputation > reputation) { continue; }
+				if (maxReputation < reputation) { continue; }
+				if (minPostLength > post.body.length) { continue; }
+
+				log("Sending money to " + user.name + "[" + reputation + "]");
+				transactionqueue.push({
+					to: user.name, amount: "0.001", currency: "SBD", memo: "A gift"
+				});
+				return; // only 1 post gets a gift
+			}
+		});
+	});
 }
 
 function advertise(processedPostCount, category, minReputation, maxReputation, minPostLength) {
@@ -568,11 +611,11 @@ function resteemPost(ownUser, author, permlink) {
 		if (!err && result) {
 			log('Successful re-steem: [' + author + '] ' + permlink);
 		} else {
-			var alreadyResteemed = err.message.indexOf("Account has already reblogged this post")>-1;
+			var alreadyResteemed = err.message.indexOf("Account has already reblogged this post") > -1;
 			logPublically('Failed to re-steem [' + author + '] : '
 				+ (alreadyResteemed ? "Account has already reblogged this post" : "Unknown Reason"));
-			
-			if (!alreadyResteemed) 
+
+			if (!alreadyResteemed)
 				log('Failed to re-steem [' + author + '] : ' + err);
 		}
 	});
