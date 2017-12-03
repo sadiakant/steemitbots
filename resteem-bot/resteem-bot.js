@@ -25,7 +25,7 @@ var RESTEEM_COMMENT = "Resteemed by @" + botUserData.name + "! Good Luck!\n" +
 	"[resteemedby]" +
 	"Curious?\n" +
 	"The @resteembot's [introduction post](" + URL_TO_INTRODUCTION_POST + ")\n" +
-	"The @reblogger's [introduction post](" + REBLOGGER_INTRODUCTION_POST + ")\n" +
+	//"The @reblogger's [introduction post](" + REBLOGGER_INTRODUCTION_POST + ")\n" +
 	"Get more from @resteembot with the #resteembotsentme initiative\n" +
 	"Check out the great posts I already resteemed.";
 
@@ -107,9 +107,9 @@ setInterval(function () { tryRetreiveEarnings(botUser, createdBy); }, 1 * HOUR);
 // 	setInterval(function () { countResteemsIn24Hours(); }, 1 * HOUR);
 // }, getMillisecondsTill12());
 
-setInterval(function () { advertise(1, null, 30, 45, 500); }, 5 * MINUTE);
+// setInterval(function () { advertise(1, null, 30, 45, 500); }, 5 * MINUTE);
 
-setInterval(function () { sendMoneyToFirstRecentAuthorWith(45, 65, 1000); }, 30 * MINUTE);
+setInterval(function () { sendMoneyToFirstRecentAuthorWith(30, 65, 1000); }, 30 * MINUTE);
 
 setInterval(function () { log("------------- [1 HOUR PASSED] -------------"); }, 1 * HOUR);
 
