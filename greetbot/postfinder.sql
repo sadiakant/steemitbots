@@ -25,8 +25,6 @@ WHERE
 	NOT json_metadata LIKE('%"colorchallenge"%') and
 	NOT json_metadata LIKE('%"politics"%') and
 
-	NOT json_metadata LIKE('%"nsfw"%') and
-
 	NOT json_metadata LIKE('%"cryptocurrency"%') and
 	NOT json_metadata LIKE('%"crypto"%') and
 	NOT json_metadata LIKE('%"bitcoin"%') and
@@ -49,7 +47,7 @@ WHERE
 	datediff(minute, created, GETDATE()) between 24*60 and 48*60 and
 	NOT lower(left(body,4)) in (ltrim('http'),ltrim('<htt'),ltrim('<div'),ltrim('<htm')) and
 	CONVERT(int,(SELECT MAX(v) FROM (VALUES(log10(ABS(CONVERT(bigint,author_reputation)-1)) - 9),(0)) T(v)) * SIGN(author_reputation) * 9 +25) between 24 and 30 and
-	pending_payout_value < 5.0000 and
+	pending_payout_value < 3.0000 and
 	LEN(body) > 5000
-ORDER BY
-	LEN(body), created
+ORDER BY 
+	created
