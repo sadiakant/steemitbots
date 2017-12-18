@@ -84,6 +84,26 @@ var followers = require(FOLLOWERS_FILEPATH);
 
 /////////////
 
+var greetbot = require("./greetbot/greetbot.js");
+greetbot.runGreetBot(steem, function onFoundPost(greetbotUser, post) {
+	transactionqueue.push({
+		ownUser: greetbotUser,
+		to: 'resteembot', amount: 0.001, currency: 'STEEM', memo: post.fullURL });
+
+	commentqueue.push({
+		ownUser: greetbotUser,
+		author: post.author,
+		permlink: post.permlink,
+		body: "Hi. I am @greetbot - a bot that uses AI to look for newbies who write good content.\n" +
+			"I found your post and decided to help you get noticed.\n" +
+			"I will pay a resteeming service to resteem your post, \n" +
+			"and I'll give you my stamp of automatic approval!\n" +
+			"![greetbot's stamp of approval](https://s7.postimg.org/9uoyyzimj/final.gif)"
+	});
+});
+
+/////////////
+
 updateFollowerList();
 setInterval(function () { updateFollowerList(); }, MUST_FOLLOW_SINCE_HOURS);
 
@@ -148,6 +168,7 @@ function checkForNewTransactions() {
 
 			transaction = parseAsTransaction(accountHistory[i]);
 			if (transaction === null || transaction === undefined) {
+				setLastHandledTransaction(index);
 				continue;
 			}
 
@@ -155,31 +176,36 @@ function checkForNewTransactions() {
 			if (follower === undefined || follower === null) {
 				logPublically(transaction.from + " is not a follower, or 3 hours haven't passed since following",
 					transaction.from, transaction.amountStr, transaction.currency);
-				continue;
-			}
-
-			if (follower.reputation < MIN_REPUTATION) {
-				logPublically(transaction.author + " has too low reputation : " + follower.reputation + ". Minimum is " + MIN_REPUTATION, transaction.from);
+				setLastHandledTransaction(index);
 				continue;
 			}
 
 			var isNewbie = follower.reputation <= NEWBIE_PROMOTION_MAX_REPUTATION;
 			var resteemsOwnPost = transaction.from === transaction.author;
-			if (isNewbie && resteemsOwnPost) // super small minnows don't have to pay more than 0.001
-			{
-				log(transaction.author + " used the newbie promotion");
-			}
-			else if (transaction.amount < follower.reputation * 0.001 * 0.9) // Min price = reputation/1000. Example: (45 * 0.001 = 0.045)
-			{
-				var message = transaction.from + " paid " + transaction.amountStrFull
-					+ " but the price for " + follower.reputation + " reputation is "
-					+ (follower.reputation * 0.001).toFixed(3);
 
-				if (isNewbie && !resteemsOwnPost)
-					message += " (Keep in mind that the cheap newbie price is only for resteeming your own content)"
+			if(transaction.from !== 'greetbot') { //TODO: Convert to whitelist & blacklist
+				if (follower.reputation < MIN_REPUTATION) {
+					logPublically(transaction.author + " has too low reputation : " + follower.reputation + ". Minimum is " + MIN_REPUTATION, transaction.from);
+					setLastHandledTransaction(index);
+					continue;
+				}
 
-				logPublically(message, transaction.from, transaction.amountStr, transaction.currency);
-				continue;
+				if (isNewbie && resteemsOwnPost) // super small minnows don't have to pay more than 0.001
+				{
+					log(transaction.author + " used the newbie promotion");
+				}
+				else if (transaction.amount < follower.reputation * 0.001 * 0.9) // Min price = reputation/1000. Example: (45 * 0.001 = 0.045)
+				{
+					var message = transaction.from + " paid " + transaction.amountStrFull
+						+ " but the price for " + follower.reputation + " reputation is "
+						+ (follower.reputation * 0.001).toFixed(3);
+
+					if (isNewbie && !resteemsOwnPost)
+						message += " (Keep in mind that the cheap newbie price is only for resteeming your own content)"
+
+					logPublically(message, transaction.from, transaction.amountStr, transaction.currency);
+					continue;
+				}
 			}
 
 			detectedTransactions++;
@@ -531,7 +557,7 @@ function voteForAPostInTheQueue(ownUser) {
 		return;
 
 	var post = votequeue.shift();
-	vote(ownUser, post.author, post.permlink, post.votingPower);
+	vote(post.ownUser || ownUser, post.author, post.permlink, post.votingPower);
 }
 
 function resteemAPostsInTheQueue(ownUser) {
@@ -539,7 +565,7 @@ function resteemAPostsInTheQueue(ownUser) {
 		return;
 
 	var post = resteemqueue.shift();
-	resteemPost(ownUser, post.author, post.permlink);
+	resteemPost(post.ownUser || ownUser, post.author, post.permlink);
 }
 
 function writeACommentInTheQueue(ownUser) {
@@ -547,7 +573,7 @@ function writeACommentInTheQueue(ownUser) {
 		return;
 
 	var post = commentqueue.shift();
-	createComment(ownUser, post.author, post.permlink, post.body);
+	createComment(post.ownUser || ownUser, post.author, post.permlink, post.body);
 }
 
 function logTransactionMemoFromQueue(ownUser) {
@@ -563,7 +589,7 @@ function sendTransactionFromQueue(ownUser) {
 		return;
 
 	var transaction = transactionqueue.shift();
-	makeTransaction(ownUser, transaction.to, transaction.amount, transaction.currency, transaction.memo);
+	makeTransaction(transaction.ownUser || ownUser, transaction.to, transaction.amount, transaction.currency, transaction.memo);
 }
 
 /////////////
@@ -647,4 +673,6 @@ function logViaTransaction(ownUser, memo) {
 /////////////
 
 var dateFormatOptions = { weekday: "long", year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" };
-function log(str) { console.log(new Date().toLocaleTimeString("en-us", dateFormatOptions) + ":  ", str); }
+//new Date().toLocaleTimeString("en-us", dateFormatOptions)
+
+function log(str) { console.log(new Date().toString(), str); }
