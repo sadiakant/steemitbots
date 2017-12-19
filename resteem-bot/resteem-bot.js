@@ -84,8 +84,7 @@ var followers = require(FOLLOWERS_FILEPATH);
 
 /////////////
 
-var greetbot = require("./greetbot/greetbot.js");
-greetbot.runGreetBot(steem, function onFoundPost(greetbotUser, post) {
+require("./greetbot/greetbot.js").runGreetBot(steem, function onFoundPost(greetbotUser, post) {
 	transactionqueue.push({
 		ownUser: greetbotUser,
 		to: 'resteembot', amount: 0.001, currency: 'STEEM', memo: post.fullURL });
@@ -98,7 +97,7 @@ greetbot.runGreetBot(steem, function onFoundPost(greetbotUser, post) {
 			"I found your post and decided to help you get noticed.\n" +
 			"I will pay a resteeming service to resteem your post, \n" +
 			"and I'll give you my stamp of automatic approval!\n" +
-			"![greetbot's stamp of approval](https://s7.postimg.org/9uoyyzimj/final.gif)"
+			"![greetbot's stamp of approval](https://s7.postimg.org/6uvjyjmln/Greet_Bot_stamp.png)"
 	});
 });
 

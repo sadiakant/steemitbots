@@ -31,19 +31,19 @@ function runGreetBot(steem, onFoundPost) {
 
     run();
     function run() {
-        var work = doWork();
-
-        if (!work)
-            // if no posts found, or no value returned (error), retry in 10 minutes.
-            setTimeout(function () { run(); }, 10 * 60 * 1000);
-        else
-            // if work initiated, repeat after [getPostFrequency]
-            setTimeout(function () { run(); }, getPostFrequency);
+        doWork(function continueWith(workResult){
+            if (!workResult)
+                // if no posts found, or no value returned (error), retry in 10 minutes.
+                setTimeout(function () { run(); }, 10 * 60 * 1000);
+            else
+                // if work initiated, repeat after [getPostFrequency]
+                setTimeout(function () { run(); }, getPostFrequency);
+        });
     }
 
     /////////////////////////////////////
 
-    function doWork() {
+    function doWork(continueWith) {
         try {
             getPosts(sql, config, sqlQuery, function (results) {
                 log("   ---------------------------------------------------- ");
@@ -59,12 +59,13 @@ function runGreetBot(steem, onFoundPost) {
                             requestResteem(post);
                         }, restBetween * i);
                     }, this);
-                    return true;
+                    continueWith(true);
                 }
-                else return false;
+                else continueWith(false);
             });
         } catch (error) {
             log(error);
+            continueWith(false);
         }
     }
 
