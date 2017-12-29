@@ -44,36 +44,41 @@ function runGreetBot(steem, onFoundPost) {
 
     function doWork(continueWith) {
         try {
-            getPosts(sql, config, sqlQuery, function (results) {
-                log("   ---------------------------------------------------- ");
-                log("Found " + results.length + " posts");
-                var restBetween = getPostFrequency / results.length;
-                log("A post will be resteemed every " + (restBetween / 1000 / 60) + " minutes");
-                log("   ---------------------------------------------------- ");
+            getPosts(sql, config, sqlQuery, function (error, results) {
+                if(!error) {   
+                    log("   ---------------------------------------------------- ");
+                    log("Found " + results.length + " posts");
+                    var restBetween = getPostFrequency / results.length;
+                    log("A post will be resteemed every " + (restBetween / 1000 / 60) + " minutes");
+                    log("   ---------------------------------------------------- ");
 
-                if (results.length > 0) {
-                    results.forEach(function (post, i) {
-                        setTimeout(function () {
-                            var post = results[i];
-                            requestResteem(post);
-                        }, restBetween * i);
-                    }, this);
-                    continueWith(true);
+                    if (results.length > 0) {
+                        results.forEach(function (post, i) {
+                            setTimeout(function () {
+                                var post = results[i];
+                                requestResteem(post);
+                            }, restBetween * i);
+                        }, this);
+                        continueWith(true);
+                    }
+                    else {
+                        continueWith(false);
+                    }
                 }
-                else {
-                    continueWith(false);
+                else {  
+                    if (error.toString().indexOf("Request failed to complete in 15000ms") > -1) {
+                        log("RequestError: Timeout: Request failed to complete in 15000ms");
+                        log("Retrying immediately");
+                        doWork(continueWith);
+                    }
+                    else {
+                        log(error.message);
+                        continueWith(false);
+                    }
                 }
             });
         } catch (error) {
-            if (error.toString().indexOf("Request failed to complete in 15000ms") > -1) {
-                log("RequestError: Timeout: Request failed to complete in 15000ms");
-                log("Retrying immediately");
-                doWork(continueWith);
-            }
-            else {
-                log(error.message);
-                continueWith(false);
-            }
+            
         }
     }
 
@@ -100,8 +105,10 @@ function runGreetBot(steem, onFoundPost) {
                 return log(err);
 
             req.query(query, function (err, data) {
-                if (err)
-                    return log(err);
+                if (err) {
+                    callback(err, null);
+                    return;
+                }
 
                 log("found " + data.recordset.length + " database records");
 
@@ -148,7 +155,7 @@ function runGreetBot(steem, onFoundPost) {
                         '\t' + currnt.fullURL;
                 }));
 
-                callback(arr);
+                callback(null, arr);
                 conn.close();
             });
         });
