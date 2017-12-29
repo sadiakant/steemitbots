@@ -31,13 +31,12 @@ function runGreetBot(steem, onFoundPost) {
 
     run();
     function run() {
-        doWork(function continueWith(workResult){
-            if (!workResult)
-                // if no posts found, or no value returned (error), retry in 10 minutes.
-                setTimeout(function () { run(); }, 10 * 60 * 1000);
-            else
-                // if work initiated, repeat after [getPostFrequency]
-                setTimeout(function () { run(); }, getPostFrequency);
+        doWork(function continueWith(workResult) {
+            if (!workResult) {
+                log("An error occured. The bot will retry in 5 minutes");
+                setTimeout(function () { run(); }, 5 * 60 * 1000);
+            }
+            else setTimeout(function () { run(); }, getPostFrequency);
         });
     }
 
@@ -61,11 +60,20 @@ function runGreetBot(steem, onFoundPost) {
                     }, this);
                     continueWith(true);
                 }
-                else continueWith(false);
+                else {
+                    continueWith(false);
+                }
             });
         } catch (error) {
-            log(error);
-            continueWith(false);
+            if (error.toString().indexOf("Request failed to complete in 15000ms") > -1) {
+                log("RequestError: Timeout: Request failed to complete in 15000ms");
+                log("Retrying immediately");
+                doWork(continueWith);
+            }
+            else {
+                log(error.message);
+                continueWith(false);
+            }
         }
     }
 
@@ -107,6 +115,11 @@ function runGreetBot(steem, onFoundPost) {
                     fullURL: "[fullURL]"
                 }];
 
+                log("dateRange: from " + data.recordset[0].created.toISOString() +
+                    " to " + data.recordset[data.recordset.length - 1].created.toISOString());
+
+                var filteredByDate = 0;
+                var filteredByEnglish = 0;
                 for (var i = 0; i < data.recordset.length; i++) {
                     var p = data.recordset[i];
 
@@ -115,10 +128,16 @@ function runGreetBot(steem, onFoundPost) {
                         englishTextScore.fullURL = p.fullURL;
                         statistics.push(englishTextScore);
 
+                        p.englishTextScore = englishTextScore;
+
                         if (englishTextScore.isEnglish)
                             arr.push(p);
+                        else filteredByEnglish++;
                     }
+                    else filteredByDate++;
                 }
+                log("[" + filteredByDate + "] posts got filtered by date (before " + newestResteemed + ")");
+                log("[" + filteredByEnglish + "] posts got filtered for bad English (< 0.03 points)");
 
                 writeFile("./statistics.txt", statistics.reduce(function (prev, currnt, i, arr) {
                     return prev +
