@@ -1,0 +1,10 @@
+# PASSWORDS
+passwords.json
+userData.json
+/*/passwords.json
+/*/userData.json
+/*/*/passwords.json
+/*/*/userData.json
+
+# NODE
+/node_modules/*
