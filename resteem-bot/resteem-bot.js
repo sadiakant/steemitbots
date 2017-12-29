@@ -29,7 +29,7 @@ var RESTEEM_COMMENT = "Resteemed by @" + botUserData.name + "! Good Luck!\n" +
 	"Get more from @resteembot with the #resteembotsentme initiative\n" +
 	"Check out the great posts I already resteemed.";
 
-var RESTEEMED_THANKS_TO = "The resteem was payed by @[resteemedby]\n";
+var RESTEEMED_THANKS_TO = "The resteem was paid by @[resteemedby]\n";
 
 var URL_TO_VOTING_LOTTERY_POST = "https://steemit.com/resteembot/@resteembot/resteem-bot-update-day-19-new-functionality";
 
