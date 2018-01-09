@@ -257,7 +257,7 @@ function updateFollowerList(lastFollowerUsername) {
 
 	var followerBatchSize = 1000
 	steem.api.getFollowers(botUserData.name, lastFollowerUsername, "blog", followerBatchSize, function (err, result) {
-		if (err === null) {
+		if (!err) {
 			var names = result.map(function (f) { return f.follower; });
 			if (lastFollowerUsername === names[0])
 				names.splice(0, 1);
