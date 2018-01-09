@@ -266,7 +266,7 @@ function updateFollowerList(lastFollowerUsername) {
 			//log(names);
 
 			steem.api.getAccounts(names, function (e, users) {
-				if (err === null) {
+				if (!err) {
 					for (var i = 0; i < users.length; i++) {
 						var user = users[i];
 						var reputation = steem.formatter.reputation(user.reputation);
