@@ -47,8 +47,9 @@ var WINNER_VOTING_POWER = 10000;
 var fs = require('fs');
 var steem = require('steem');
 
-var steemitWSS = "wss://steemd-int.steemit.com"
-steem.api.setOptions({ url: steemitWSS });
+// var steemitWSS = "wss://steemd-int.steemit.com"
+// steem.api.setOptions({ url: steemitWSS });
+steem.api.setOptions({ url: 'https://api.steemit.com' });
 
 var SECOND = 1000;
 var MINUTE = 60 * SECOND;
@@ -84,24 +85,24 @@ var followers = require(FOLLOWERS_FILEPATH);
 
 /////////////
 
-require("./greetbot/greetbot.js").runGreetBot(steem, function onFoundPost(greetbotUser, post) {
-	transactionqueue.push({
-		ownUser: greetbotUser,
-		to: 'resteembot', amount: 0.001, currency: 'STEEM', memo: post.fullURL });
+// require("./greetbot/greetbot.js").runGreetBot(steem, function onFoundPost(greetbotUser, post) {
+// 	transactionqueue.push({
+// 		ownUser: greetbotUser,
+// 		to: 'resteembot', amount: 0.001, currency: 'STEEM', memo: post.fullURL });
 
-	var score = (post.englishTextScore.englishSpeechRatio * 1000).toFixed(2);
+// 	var score = (post.englishTextScore.englishSpeechRatio * 1000).toFixed(2);
 
-	commentqueue.push({
-		ownUser: greetbotUser,
-		author: post.author,
-		permlink: post.permlink,
-		body: "Hi. I am @greetbot - a bot that uses ***AI*** to look for newbies who write good content!\n" +
-			"Your post was approved by me. As reward it will be resteemed by a resteeming service.\n" +
-			"![greetbot's stamp of approval](https://s10.postimg.org/3ksxxmpc9/stamp-250.png)\n" +
-			"> @greetbot evaluated your post's quality score as [" + score + "] points!\n" +
-			"Good Job!"
-	});
-});
+// 	commentqueue.push({
+// 		ownUser: greetbotUser,
+// 		author: post.author,
+// 		permlink: post.permlink,
+// 		body: "Hi. I am @greetbot - a bot that uses ***AI*** to look for newbies who write good content!\n" +
+// 			"Your post was approved by me. As reward it will be resteemed by a resteeming service.\n" +
+// 			"![greetbot's stamp of approval](https://s10.postimg.org/3ksxxmpc9/stamp-250.png)\n" +
+// 			"> @greetbot evaluated your post's quality score as [" + score + "] points!\n" +
+// 			"Good Job!"
+// 	});
+// });
 
 /////////////
 
