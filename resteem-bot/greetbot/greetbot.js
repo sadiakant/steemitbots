@@ -172,7 +172,7 @@ function runGreetBot(steem, onFoundPost) {
             if (err) {
                 log(err);
             } else {
-                newestResteemed = date;
+                newestResteemed = dateStr;
                 log(NEWEST_RESTEEMED_PATH + " changed to " + dateStr);
             }
         });
