@@ -90,11 +90,11 @@ var followers = require(FOLLOWERS_FILEPATH);
 // 	transactionqueue.push({
 // 		ownUser: greetbotUser,
 // 		to: 'resteembot', amount: 0.001, currency: 'STEEM', memo: post.fullURL });
-
+//
 // 	var score = (post.englishTextScore.englishSpeechRatio * 1000).toFixed(2);
-
+//
 // 	commentqueue.push({
-// 		ownUser: greetbotUser,
+//		ownUser: greetbotUser,
 // 		author: post.author,
 // 		permlink: post.permlink,
 // 		body: "Hi. I am @greetbot - a bot that uses ***AI*** to look for newbies who write good content!\n" +
@@ -282,7 +282,9 @@ function updateFollowerList(lastFollowerUsername) {
 			if (result.length == followerBatchSize)
 				updateFollowerList(names[names.length - 1]);
 			else {
-				saveFollowerList();
+				setTimeout(function(){				
+					saveFollowerList();
+				}, 5000);
 			}
 
 		} else {
