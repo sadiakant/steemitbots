@@ -204,7 +204,7 @@ function readTransaction(transaction) {
 		if (err || allowedTags.every(t1 => tags.every(t2 => t1 != t2))) {
 
 			logPublically(
-				transaction.from + ", " + botUser.name + " is a photography service, please use the tags like [" + allowedTags.join(", ") + "] in your post",
+				transaction.from + ", " + botUser.name + " is a photography service. Please include the photography tag to resteem your post",
 				transaction.from, transaction.amountStr, transaction.currency);
 		}
 		else {
