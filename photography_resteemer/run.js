@@ -107,8 +107,8 @@ setInterval(function () { sendTransactionFromQueue(botUser); }, 10 * SECOND);
 
 setInterval(function () { writeACommentInTheQueue(botUser); }, 40 * SECOND);
 
-// tryRetreiveEarnings(botUser, ownedBy);
-// setInterval(function () { tryRetreiveEarnings(botUser, ownedBy); }, 1 * HOUR);
+tryRetreiveEarnings(botUser, ownedBy);
+setInterval(function () { tryRetreiveEarnings(botUser, ownedBy); }, 1 * HOUR);
 
 setTimeout(function () {
 	countResteemsIn24Hours();
