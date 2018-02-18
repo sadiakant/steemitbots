@@ -1,0 +1,14 @@
+{
+  "name": "photography_resteemer",
+  "version": "1.0.0",
+  "description": "a steemit bot that resteems photography for money",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Alexander Dinkov (alexander.n.dinkov@gmail.com)",
+  "license": "ISC",
+  "dependencies": {
+    "steem": "^0.7.1"
+  }
+}
