@@ -201,6 +201,6 @@ function isTextInEnglish(text) {
         length: text.length,
         occurances: occurances,
         englishSpeechRatio: englishSpeechRatio,
-        isEnglish: englishSpeechRatio > 0.03
+        isEnglish: englishSpeechRatio > 0.04
     };
 }
