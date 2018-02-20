@@ -7,4 +7,6 @@ userData.json
 /*/*/userData.json
 
 # NODE
-/node_modules/*
+/node_modules/
+*/node_modules/
+*/node_modules/*/node_modules/
