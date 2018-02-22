@@ -107,61 +107,21 @@ function logTransactionMemoFromQueue(wif, username, queue) {
 /////////////
 
 function vote(wif, username, author, permlink, votingPower) {
-	steem.broadcast.vote(wif, username, author, permlink, votingPower, function (err, voteResult) {
-		if (!err && voteResult) {
-			console.log(username + " voted " + (votingPower / 100) + "% : /" + author + "/" + permlink);
-		} else {
-			console.log('Voting failure (' + author + '): ' + err);
-		}
-	});
+	console.log("[vote]", username, author, permlink, votingPower)
 }
 
 function resteemPost(wif, username, author, permlink) {
-	const json = JSON.stringify(['reblog', {
-		account: username,
-		author: author,
-		permlink: permlink
-	}]);
-
-	steem.broadcast.customJson(wif, [], [username], 'follow', json, (err, result) => {
-		if (!err && result) {
-			console.log('Successful re-steem: [' + author + '] ' + permlink);
-		} else {
-			var alreadyResteemed = err.message.indexOf("Account has already reblogged this post") > -1;
-			logPublically('Failed to re-steem [' + author + '] : '
-				+ (alreadyResteemed ? "Account has already reblogged this post" : "Unknown Reason"));
-
-			if (!alreadyResteemed)
-				console.log('Failed to re-steem [' + author + '] : ' + err);
-		}
-	});
+	console.log("[resteemPost]", username, author, permlink)
 }
 
 function createComment(wif, username, author, permlink, body) {
-	var commentPermlink = steem.formatter.commentPermlink(author, permlink);
-	steem.broadcast.comment(wif, author, permlink, username, commentPermlink, "", body, "", function (err, result) {
-		if (!err && result) {
-			console.log('Successful comment: [' + author + '] ' + permlink);
-		} else {
-			console.log('Failed to create comment: ' + err);
-		}
-	});
+	console.log("[createComment]", username, author, permlink, body);
 }
 
 function makeTransaction(wif, username, to, amount, currency, memo) {
-	steem.broadcast.transfer(wif, username, to, amount + " " + currency, memo, function (err, result) {
-		if (!err && result) {
-			console.log("Successfull transaction from " + username + " of " + amount + " " + currency + " to '" + to + "'");
-		} else {
-			console.log(err.message);
-		}
-	});
+	console.log("[makeTransaction]", username, to, amount, currency, memo);
 }
 
 function logViaTransaction(wif, username, memo) {
-	steem.broadcast.transfer(wif, username, username, "0.001 SBD", memo, function (err, result) {
-		if (err) {
-			console.log(err.message);
-		}
-	});
+	console.log("[logViaTransaction]", username, memo);
 }

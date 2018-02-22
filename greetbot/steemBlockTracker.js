@@ -22,6 +22,7 @@ setInterval(function () {
 
 function readNewBlocks(username, callbackOnCommentWithMention, callbackOnEveryNewPost) {
     steem.api.getState("", function(err, data){
+        if(err) return;
         var lastBlock = data.props.last_irreversible_block_num;
         var blocksToRead = [];
         while(lastBlock > lastParsedBlock+1)
@@ -41,10 +42,11 @@ function readNewBlocks(username, callbackOnCommentWithMention, callbackOnEveryNe
 
 function parseBlockComments(blockNum, username, callbackOnCommentWithMention, callbackOnEveryNewPost) {
     steem.api.getOpsInBlock(blockNum, false, function(err, data){
-        if(!data) 
-            return;
+        if(err) return;
         var comments = data.map(d=>d.op).filter(op=>op[0] == "comment").map(op=>op[1]);
         comments.forEach(comment => {
+            comment.timestamp = data[0].timestamp;
+            
             if(comment.body.indexOf("@"+username) > -1) {
                 callbackOnCommentWithMention(comment);
             }
