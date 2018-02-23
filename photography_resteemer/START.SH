@@ -1,0 +1,1 @@
+terminal -e "bash -c \"while true; do ls; npm run-script start; echo -----RESTARTING-----; sleep 10; done\""

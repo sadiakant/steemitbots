@@ -4,6 +4,7 @@
   "description": "a steemit bot that resteems photography for money",
   "main": "index.js",
   "scripts": {
+    "start": "node run.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Alexander Dinkov (alexander.n.dinkov@gmail.com)",
