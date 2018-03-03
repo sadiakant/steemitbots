@@ -92,8 +92,8 @@ function getRootCommentsBetween(fromDate, toDate, filter, callback) {
                 var results = [];
                 blocksToRead.forEach(blockNum => {
                     readqueue.push({blockNum:blockNum, callback:function (err, data) {
-                        if (blockNum % 1000 == 0)
-                            console.log("Yesterday's blocks left: " + (blockNum_to - blockNum));
+                        if (blockNum % 500 == 0)
+                            console.log("Blocks left to read: " + (blockNum_to - blockNum));
 
                         if(err){
                             console.log(err);

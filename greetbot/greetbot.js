@@ -21,7 +21,7 @@ steem.api.setOptions({ url: 'https://api.steemit.com' });
 var HOUR = 60 * 60 * 1000;
 var REWARDQUEUE_PATH = "./rewardqueue.json";
 
-var rewardqeue = require(REWARDQUEUE_PATH);
+var rewardqueue = require(REWARDQUEUE_PATH);
 
 ////////////////////
 
@@ -53,12 +53,14 @@ console.log("Starting to listen for comments mentioning: @" + userData.name + ".
 
 setInterval(() => { steemBlockTracker.readNewBlocks(userData.name, onNewMention); }, 60 * 1000);
 
-setInterval(() => { rewardAPostFromQueue(rewardqeue); }, 15 * 60 * 1000);
+setInterval(() => { rewardAPostFromQueue(rewardqueue); }, 0.0015 * 60 * 1000);
 
 setTimeout(function() {
-    rewardYesterdaysGoodWriters(new Date - (48 * HOUR), new Date() - (24 * HOUR));
-    setInterval(() => { rewardYesterdaysGoodWriters(new Date - (48 * HOUR), new Date() - (24 * HOUR)); }, 24 * HOUR);    
-}, getMillisecondsTill(19, 37));
+    rewardYesterdaysGoodWriters(new Date - (48 * HOUR), new Date() - (44 * HOUR));
+    setInterval(() => { rewardYesterdaysGoodWriters(new Date - (48 * HOUR), new Date() - (44 * HOUR)); }, 4 * HOUR);    
+}, 1111); //getMillisecondsTill(23,50));
+
+setInterval(() => { rewardqueue = rewardqueue.slice(0, 10); }, 3.14 * 24 * HOUR);
 
 function onNewMention(comment) {
     var postedByBot = comment.author == userData.name;
@@ -90,25 +92,29 @@ function rewardYesterdaysGoodWriters(from, to) {
         console.log("Total post count : " + posts.length);
         postsFilter.complexFilter(posts, function (approvedPosts) {
 
-            rewardqeue = approvedPosts
-                .sort((a,b) => b.score.englishSpeechRatio - a.score.englishSpeechRatio)
-                .map(p => {
-                    return {
-                        author:p.author, 
-                        permlink: p.permlink,
-                        scorePoints: p.score.englishSpeechRatio,
-                    };
-                });
+            approvedPosts = approvedPosts.map(p => {
+                return {
+                    author: p.author,
+                    permlink: p.permlink,
+                    scorePoints: englishEvaluater.isTextInEnglish(p.body).englishSpeechRatio,
+                };
+            });
+
+            rewardqueue = approvedPosts.concat(rewardqueue)
+                .sort((a, b) => b.scorePoints - a.scorePoints)
+                .slice(0, 50);
+            
+            console.log("New posts added to reward queue. " + rewardqueue.length + " posts waiting to be rewarded.");
         });
     });
 }
 
-function rewardAPostFromQueue(rewardqeue) {
-    if (queue.length < 1)
+function rewardAPostFromQueue(rewardqueue) {
+    if (rewardqueue.length < 1)
         return;
 
-    var post = queue.shift();
-    fs.writeFileSync(REWARDQUEUE_PATH, JSON.stringify(rewardqeue));
+    var post = rewardqueue.shift();
+    fs.writeFileSync(REWARDQUEUE_PATH, JSON.stringify(rewardqueue));
 
     var points = (post.scorePoints * 1000).toFixed(2);
 

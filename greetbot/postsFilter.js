@@ -39,12 +39,8 @@ function simpleFilter(comment) {
 
 function complexFilter(posts, callback) {
 
-    var posts = posts
-        .map(p => {
-            p.score = englishEvaluater.isTextInEnglish(p.body);
-            return p;
-        })
-        .filter(p => p.score.isEnglish);
+    var posts = posts.filter(p => 
+        englishEvaluater.isTextInEnglish(p.body).isEnglish);
 
     var postsByAuthor = {};
     posts.forEach(p => {
@@ -64,15 +60,8 @@ function complexFilter(posts, callback) {
 
         // check user's reputation
         nonSpammers = usersData.filter(u=>{
-            var reputation = steem.formatter.reputation(u.reputation);
-            return (MIN_REP <= self.reputation && self.reputation <= MAX_REP);
-        });
-
-        // check user's money
-        nonSpammers = nonSpammers.filter(u=>{
-            return Object.keys(u)
-                .filter(k => u[k] + "".indexOf("STEEM") > 4 || u[k] + "".indexOf("SBD") > 4)
-                .every(k => parseFloat(u[k]) < 200);
+            var rep = steem.formatter.reputation(u.reputation);
+            return (MIN_REP <= rep && rep <= MAX_REP);
         });
 
         posts = [];
@@ -81,40 +70,34 @@ function complexFilter(posts, callback) {
 
             for (var p in postsByAuthor[username]) {
                 postsByAuthor[username][p].user = nonSpammers[a];
-                posts.push(postsByAuthor[a][p]);
+                posts.push(postsByAuthor[username][p]);
             }
         }
                 
         var approvedPosts = [];
-        posts.forEach(p => {
-            steem.api.getContent(p.author, p.permlink, function (err, content) {
-                try {
-                    if(err){
-                        console.log(err);
-                        return;
-                    }
-
-                    //no downvotes
-                    if(content.active_votes.some(v=>v.percent < 0))
-                        return;
-
-                    //no 'cheetah' votes
-                    if(content.active_votes.some(v=>v.voter === 'cheetah'))
-                        return;
-
-                    //pending payout < 3
-                    if (parseFloat(content.pending_payout_value) > 3)
-                        return;
-
-                    approvedPosts.push(p);
-                        
-                } finally {
-                    if(posts[posts.length-1] === p){
-                        callback(approvedPosts);
-                    }
+        var onContent = function (err, content) {
+            try {
+                if(err)
+                    return console.log(err);
+                if(content.active_votes.some(v=>v.percent < 0))
+                    return; //no downvotes
+                if(content.active_votes.some(v=>v.voter === 'cheetah'))
+                    return; //no 'cheetah' votes
+                if (parseFloat(content.pending_payout_value) > 3)
+                    return; //pending payout < 3
+                approvedPosts.push(content);
+            } finally {
+                if(posts[posts.length-1].permlink === content.permlink){
+                    callback(approvedPosts);
                 }
-            });
-        });
+            }
+        };
+
+        posts.forEach(function(p, i) {
+            setTimeout(function () {
+                steem.api.getContent(p.author, p.permlink, onContent);
+            }, i * 50);
+        }, this);
     });
 }
 
