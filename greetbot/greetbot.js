@@ -14,16 +14,32 @@ var englishEvaluater = require("./englishEvaluater");
 
 var steemApiUtils = require("./steemApiUtils");
 
-////////////////////
+/////////[ SETUP ]///////////
 
 steem.api.setOptions({ url: 'https://api.steemit.com' });
 
 var HOUR = 60 * 60 * 1000;
+
+var CHECK_H = 4;
+
 var REWARDQUEUE_PATH = "./rewardqueue.json";
 
 var rewardqueue = require(REWARDQUEUE_PATH);
 
-////////////////////
+/////////[ UTILITY ]///////////
+
+function getMillisecondsTill(h, m, s) {
+	var d = new Date();
+	d.setHours(h || 0);s
+	d.setMinutes(m || 0);
+	d.setSeconds(s || 0);
+
+	var msTo12 = d - new Date();
+	if (msTo12 < 0)
+		msTo12 += 24 * HOUR
+
+	return msTo12;
+}
 
 // This is just a trick for better logging. Attach the datetime of each line.
 ((function improveLogging() {
@@ -47,9 +63,8 @@ setInterval(function () {
     console.log("------------- [1 HOUR PASSED] -------------");
 }, HOUR);
 
-////////////////////
+/////////[ SCHEDULED TASKS ]///////////
 
-var CHECK_H = 4;
 
 console.log("Starting to listen for comments mentioning: @" + userData.name + "...");
 
@@ -64,13 +79,15 @@ setTimeout(function() {
         console.log("Starting check for posts to reward...");
         rewardYesterdaysGoodWriters(new Date - (48 * HOUR), new Date() - ((48-CHECK_H) * HOUR)); 
     }, CHECK_H * HOUR);    
-}, getMillisecondsTill(15,48));
+}, getMillisecondsTill(15,55));
 
 setInterval(() => {
     setTimeout(function() {
         rewardqueue = rewardqueue.slice(0, 10); 
     }, (CHECK_H - 1) * HOUR);
 }, 4 * CHECK_H * HOUR);
+
+/////////[ MENTION RESPONDING ]///////////
 
 function onNewMention(comment) {
     var postedByBot = comment.author == userData.name;
@@ -96,6 +113,8 @@ function onNewMention(comment) {
     });
 }
 
+/////////[ NEWBIE REWARDING ]///////////
+
 function rewardYesterdaysGoodWriters(from, to) {
     steemBlockTracker.getRootCommentsBetween(from, to, postsFilter.simpleFilter, function (posts) {
         console.log("Finished scanning for posts written yesterday");
@@ -113,6 +132,8 @@ function rewardYesterdaysGoodWriters(from, to) {
             rewardqueue = approvedPosts.concat(rewardqueue)
                 .sort((a, b) => b.scorePoints - a.scorePoints)
                 .slice(0, 50);
+                
+            fs.writeFileSync(REWARDQUEUE_PATH, JSON.stringify(rewardqueue));
             
             console.log("New posts added to reward queue. " + rewardqueue.length + " posts waiting to be rewarded.");
             console.log("------------------");
@@ -146,17 +167,4 @@ function rewardAPostFromQueue(rewardqueue) {
     steemBroadcaster.comment(post.author, post.permlink, replyText);
     steemBroadcaster.transfer("resteembot", 0.001, "STEEM", "https://steemit.com/@" + post.author + "/" + post.permlink);
 
-}
-
-function getMillisecondsTill(h, m, s) {
-	var d = new Date();
-	d.setHours(h || 0);s
-	d.setMinutes(m || 0);
-	d.setSeconds(s || 0);
-
-	var msTo12 = d - new Date();
-	if (msTo12 < 0)
-		msTo12 += 24 * HOUR
-
-	return msTo12;
 }
