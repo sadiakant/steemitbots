@@ -5,7 +5,7 @@ var steemBlockTracker = require("./steemBlockTracker");
 
 var userData = require("./userData.json");
 
-var steemBroadcaster = require("./steemBroadcasterMock")
+var steemBroadcaster = require("./steemBroadcaster")
     .start(steem.auth.toWif(userData.name, userData.password, 'owner'), userData.name);
 
 var postsFilter = require("./postsFilter");
@@ -55,7 +55,7 @@ console.log("Starting to listen for comments mentioning: @" + userData.name + ".
 
 setInterval(() => { steemBlockTracker.readNewBlocks(userData.name, onNewMention); }, 60 * 1000);
 
-setInterval(() => { rewardAPostFromQueue(rewardqueue); }, 0.0015 * 60 * 1000);
+setInterval(() => { rewardAPostFromQueue(rewardqueue); }, 15 * 60 * 1000);
 
 setTimeout(function() {
     console.log("Starting check for posts to reward...");
@@ -64,7 +64,7 @@ setTimeout(function() {
         console.log("Starting check for posts to reward...");
         rewardYesterdaysGoodWriters(new Date - (48 * HOUR), new Date() - ((48-CHECK_H) * HOUR)); 
     }, CHECK_H * HOUR);    
-}, 10);// getMillisecondsTill(10,20));
+}, getMillisecondsTill(15,48));
 
 setInterval(() => {
     setTimeout(function() {
@@ -83,8 +83,8 @@ function onNewMention(comment) {
             var score = englishEvaluater.isTextInEnglish(root.body);
             var points = (score.englishSpeechRatio * 1000).toFixed(2);
             var message = "Greetings from @greetbot.\n" +
-                "This discussion scorred [" + points + "] points on my scale.\n" + 
-                (score.englishSpeechRatio > 0.4
+                "This discussion scorred [" + points + "] points [on my scale](https://steemit.com/greetbot/@greetbot/introduction-updated).\n" + 
+                (score.englishSpeechRatio > 0.44
                     ? "![greetbot's stamp of approval](https://s10.postimg.org/3ksxxmpc9/stamp-250.png)"
                     : "");
             steemBroadcaster.comment(comment.author, comment.permlink, message);
@@ -131,16 +131,17 @@ function rewardAPostFromQueue(rewardqueue) {
 
     console.log("Rewarding post : https://steemit.com/@" + post.author + "/" + post.permlink + " - " + points + " points");
 
-    var replyText = "Hi. I am a bot that looks for newbies who write good content!\n" +
-        "I also write bots for other people.\n" +
+    var replyText = "Hi. I am a bot that [looks for newbies who write good content](https://steemit.com/greetbot/@greetbot/introduction-updated)!\n" +
         "Your post passed all of my tests.\n" +
-        "> @greetbot evaluated your post's quality score at [" + points + "] points!\n" +
+        "> @greetbot evaluated your post's quality score at ***[" + points + "] points***!\n" +
         "### You get:\n" +
         " - @greetbot's stamp of approval\n" +
         " - A free resteem from @resteembot\n" +
         " - An invitation to the [PAL Discord](https://discord.gg/GUuCXgY) - they give free upvotes\n" +
         "--------\n" +
-        "![greetbot's stamp of approval](https://s10.postimg.org/3ksxxmpc9/stamp-250.png)";
+        "![greetbot's stamp of approval](https://s10.postimg.org/3ksxxmpc9/stamp-250.png)\n"+
+        "[I also write bots and other code for crypto...](https://steemit.com/@greetbot/i-will-code-for-crypto)." +
+        
 
     steemBroadcaster.comment(post.author, post.permlink, replyText);
     steemBroadcaster.transfer("resteembot", 0.001, "STEEM", "https://steemit.com/@" + post.author + "/" + post.permlink);
