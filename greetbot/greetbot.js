@@ -49,6 +49,8 @@ setInterval(function () {
 
 ////////////////////
 
+var CHECK_H = 4;
+
 console.log("Starting to listen for comments mentioning: @" + userData.name + "...");
 
 setInterval(() => { steemBlockTracker.readNewBlocks(userData.name, onNewMention); }, 60 * 1000);
@@ -56,11 +58,19 @@ setInterval(() => { steemBlockTracker.readNewBlocks(userData.name, onNewMention)
 setInterval(() => { rewardAPostFromQueue(rewardqueue); }, 0.0015 * 60 * 1000);
 
 setTimeout(function() {
-    rewardYesterdaysGoodWriters(new Date - (48 * HOUR), new Date() - (44 * HOUR));
-    setInterval(() => { rewardYesterdaysGoodWriters(new Date - (48 * HOUR), new Date() - (44 * HOUR)); }, 4 * HOUR);    
-}, 1111); //getMillisecondsTill(23,50));
+    console.log("Starting check for posts to reward...");
+    rewardYesterdaysGoodWriters(new Date - (48 * HOUR), new Date() - ((48-CHECK_H) * HOUR));
+    setInterval(() => { 
+        console.log("Starting check for posts to reward...");
+        rewardYesterdaysGoodWriters(new Date - (48 * HOUR), new Date() - ((48-CHECK_H) * HOUR)); 
+    }, CHECK_H * HOUR);    
+}, 10);// getMillisecondsTill(10,20));
 
-setInterval(() => { rewardqueue = rewardqueue.slice(0, 10); }, 3.14 * 24 * HOUR);
+setInterval(() => {
+    setTimeout(function() {
+        rewardqueue = rewardqueue.slice(0, 10); 
+    }, (CHECK_H - 1) * HOUR);
+}, 4 * CHECK_H * HOUR);
 
 function onNewMention(comment) {
     var postedByBot = comment.author == userData.name;
@@ -105,6 +115,7 @@ function rewardYesterdaysGoodWriters(from, to) {
                 .slice(0, 50);
             
             console.log("New posts added to reward queue. " + rewardqueue.length + " posts waiting to be rewarded.");
+            console.log("------------------");
         });
     });
 }
@@ -120,10 +131,15 @@ function rewardAPostFromQueue(rewardqueue) {
 
     console.log("Rewarding post : https://steemit.com/@" + post.author + "/" + post.permlink + " - " + points + " points");
 
-    var replyText = "Hi. I am a bot that looks for newbies who write good content!" + "\n" +
-        "I also write bots for other people." +
-        "Your post passed all of my tests." + "\n" +
-        "> @greetbot evaluated your post's quality score at [" + points + "] points!" + "\n" +
+    var replyText = "Hi. I am a bot that looks for newbies who write good content!\n" +
+        "I also write bots for other people.\n" +
+        "Your post passed all of my tests.\n" +
+        "> @greetbot evaluated your post's quality score at [" + points + "] points!\n" +
+        "### You get:\n" +
+        " - @greetbot's stamp of approval\n" +
+        " - A free resteem from @resteembot\n" +
+        " - An invitation to the [PAL Discord](https://discord.gg/GUuCXgY) - they give free upvotes\n" +
+        "--------\n" +
         "![greetbot's stamp of approval](https://s10.postimg.org/3ksxxmpc9/stamp-250.png)";
 
     steemBroadcaster.comment(post.author, post.permlink, replyText);

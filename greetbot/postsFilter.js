@@ -50,7 +50,7 @@ function complexFilter(posts, callback) {
     });
 
     var nonSpammers = Object.keys(postsByAuthor)
-        .filter(a=>postsByAuthor[a].length < 5);
+        .filter(a=>postsByAuthor[a].length < 3);
 
     steem.api.getAccounts(nonSpammers, function(err, usersData){
         if(err){

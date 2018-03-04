@@ -139,10 +139,10 @@ function findFirstBlockAfterDate(lastBlock, step, tolerance, fromDate, callback)
             var blockDate = new Date(headers.timestamp);
             var diff = blockDate - fromDate;
 
-            console.log(
-                "Searching for block from " + diffFromNow + 
-                "\tChecking #" + (lastBlock + step) + " [" + pad(step, 7) + " ] " +
-                " Diff : " + ((diff/1000/60).toFixed(1)) + "\tmin." );
+            // console.log(
+            //     "Searching for block from " + diffFromNow + 
+            //     "\tChecking #" + (lastBlock + step) + " [" + pad(step, 7) + " ] " +
+            //     " Diff : " + ((diff/1000/60).toFixed(1)) + "\tmin." );
 
             if(0 < diff && diff < tolerance) {
                 //If we are lucky and find a block with the exact time

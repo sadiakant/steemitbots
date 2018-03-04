@@ -115,13 +115,13 @@ function resteemPost(wif, username, author, permlink) {
 }
 
 function createComment(wif, username, author, permlink, body) {
-	console.log("[createComment]", username, author, permlink, body);
+	console.log("[createComment]", username, author, permlink, "\n\t" + body.split("\n").join("\n\t"));
 }
 
 function makeTransaction(wif, username, to, amount, currency, memo) {
-	console.log("[makeTransaction]", username, to, amount, currency, memo);
+	console.log("[makeTransaction]", username, to, amount, currency, "\n\t" + memo);
 }
 
 function logViaTransaction(wif, username, memo) {
-	console.log("[logViaTransaction]", username, memo);
+	console.log("[logViaTransaction]", username, "\n\t" + memo);
 }
