@@ -19,7 +19,7 @@ setInterval(function () {
         return;
     var readAction = readqueue.shift();
     steem.api.getOpsInBlock(readAction.blockNum, false, readAction.callback);
-}, 25);
+}, 100);
 
 var readheaderqueue = [];
 setInterval(function () {
@@ -27,7 +27,7 @@ setInterval(function () {
         return;
     var readAction = readheaderqueue.shift();
     steem.api.getBlockHeader(readAction.blockNum, readAction.callback);
-}, 60);
+}, 80);
 
 ///////////////////
 

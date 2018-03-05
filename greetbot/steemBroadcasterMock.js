@@ -21,11 +21,11 @@ function start(wif, username) {
     var transactionqueue = [];
     var logqueue = [];
 
-    setInterval(function () { voteForAPostInTheQueue(wif, username, votequeue); }, 10 * SECOND);
+    setInterval(function () { voteForAPostInTheQueue(wif, username, votequeue); }, 1 * SECOND);
     setInterval(function () { resteemAPostsInTheQueue(wif, username, resteemqueue); }, 1 * SECOND);
-    setInterval(function () { writeACommentInTheQueue(wif, username, commentqueue); }, 40 * SECOND);
-    setInterval(function () { sendTransactionFromQueue(wif, username, transactionqueue); }, 10 * SECOND);
-    setInterval(function () { logTransactionMemoFromQueue(wif, username, logqueue); }, 10 * SECOND);
+    setInterval(function () { writeACommentInTheQueue(wif, username, commentqueue); }, 1 * SECOND);
+    setInterval(function () { sendTransactionFromQueue(wif, username, transactionqueue); }, 1 * SECOND);
+    setInterval(function () { logTransactionMemoFromQueue(wif, username, logqueue); }, 1 * SECOND);
 
     return {
         vote: function (author, permlink, votingPower) {
