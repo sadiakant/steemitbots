@@ -66,6 +66,7 @@ var botUser = initUser(botUserData);
 
 var checkForPostsSince = ""
 var lastHandledTransaction = require(LAST_TRANSACTION_FILEPATH).index;
+var last_irreversible_block_num = 0;
 
 var countOfResteemsIn24Hours = 150;
 
@@ -82,6 +83,9 @@ var followers = require(FOLLOWERS_FILEPATH);
 // ## PLAYGROUND ## //
 
 /////////////
+
+getLatestBlock();
+setInterval(function () { getLatestBlock(); }, 10000);
 
 updateFollowerList();
 setInterval(function () { updateFollowerList(); }, MUST_FOLLOW_SINCE_HOURS);
@@ -114,6 +118,12 @@ setInterval(function () { log("------------- [1 HOUR PASSED] -------------"); },
 
 /////////////
 
+function getLatestBlock() {
+    steem.api.getState("", function(err, data){
+        last_irreversible_block_num = data.props.last_irreversible_block_num - 20;
+    });
+}
+
 function checkShouldStop() { return !fs.existsSync("./DontStop"); }
 
 function checkForNewTransactions() {
@@ -123,8 +133,9 @@ function checkForNewTransactions() {
 	}
 
 	steem.api.getAccountHistory(botUser.name, 99999999, 1000, function (err, accountHistory) {
-
 		if (err) { log(err); return; }
+
+		accountHistory = accountHistory.filter(h => h[1].block < last_irreversible_block_num);
 
 		var detectedTransactions = 0;
 		var newItems = 0;
