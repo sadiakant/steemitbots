@@ -336,7 +336,7 @@ function parseAsTransaction(historyItem) {
 			logPublically(transaction.from + "'s memo doesn't contain a SteemIt link (" + transaction.memo + "). "
 				+ "The bot will assume that it was a donation. Thank you. "
 				+ "(If it was not a donation, feel free to contact me to settle the problem.)",
-				transaction.from);
+				transaction.amount >= 0.002? transaction.from : undefined);
 			return null;
 		}
 
@@ -351,7 +351,9 @@ function parseAsTransaction(historyItem) {
 	}
 	catch (ex) {
 		logPublically(transaction.from + "'s memo couldn't be parsed as link (" + transaction.memo + ")",
-			transaction.from, transaction.amountStr, transaction.currency);
+			transaction.amount >= 0.002? transaction.from : undefined, 
+			transaction.amountStr,
+			transaction.currency);
 		return null;
 	}
 
