@@ -2,8 +2,8 @@
 
  - Install NodeJS
  - Open your terminal/cmd, navigate to the bot folder and write [> `npm i`]
- - Fill `userData.json` with your username, owner password (in the specified JSON format) and the desired tag
- - Go to `lastHandledTransaction.json` and change the date to the moment you wish to start working from. Make sure to keep the formatting style of the date. The bot will only resteem posts that occured after it.
+ - Fill `config.json` with your an array of objects with a username, owner password (in the specified JSON format) and the desired tag
+ - Go to `lastResteemed.json` and change the categories and the corresponding dates to the moment you wish to start working from. Make sure to keep the formatting style of the date. The bot will only resteem posts that occured after it.
  - Open your terminal/cmd, navigate to the bot folder and write [> `node bot.js`]
 
 
