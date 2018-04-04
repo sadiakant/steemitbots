@@ -1,0 +1,28 @@
+{
+    "categotyResteem": [
+        {
+            "name": "bot1",
+            "password": "password",
+            "category": "tag1"
+        },
+        {
+            "name": "bot2",
+            "password": "password",
+            "category": "tag2"
+        }
+    ],
+    "voteForPostsOf": [
+        {
+            "name": "bot3",
+            "password": "password",
+            "votePostsOf": "haejin",
+            "votingPower": -100
+        },
+        {
+            "name": "bot4",
+            "password": "password",
+            "votePostsOf": "some-cool-user",
+            "votingPower": 50
+        }
+    ]
+}

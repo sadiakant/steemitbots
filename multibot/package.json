@@ -1,0 +1,14 @@
+{
+  "name": "multiot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bots.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "AND",
+  "license": "ISC",
+  "dependencies": {
+    "steem": "^0.6.7"
+  }
+}
