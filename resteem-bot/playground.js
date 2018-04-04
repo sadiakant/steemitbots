@@ -1,36 +1,29 @@
-var steem = require("steem");
+var fs = require("fs");
 
-steem.api.setOptions({ url: 'https://api.steemit.com' });
+var d = new Date();
+var message = "1234567890"
+var fileName = "" +
+    d.getFullYear() + "-" +
+    pad(d.getMonth(), 2) + "-" +
+    pad(d.getDay(), 2) + ".log"; 
 
-var lastBlock = 0;
-var latestHistoryItem = 0;
+fs.appendFileSync(fileName, message + "\n");
+fs.appendFileSync(fileName, message + "\n");
+fs.appendFileSync(fileName, message + "\n");
+fs.appendFileSync(fileName, message + "\n");
+fs.appendFileSync(fileName, message + "\n");
+fs.appendFileSync(fileName, message + "\n");
+fs.appendFileSync(fileName, message + "\n");
+fs.appendFileSync(fileName, message + "\n");
+fs.appendFileSync(fileName, message + "\n");
+fs.appendFileSync(fileName, message + "\n");
+fs.appendFileSync(fileName, message + "\n");
+fs.appendFileSync(fileName, message + "\n");
+fs.appendFileSync(fileName, message + "\n");
+fs.appendFileSync(fileName, message + "\n");
 
-steem.api.getAccountHistory("resteembot", 99999999, 1000, function (err, accountHistory) {
-    latestHistoryItem = accountHistory[accountHistory.length-1][1].block;
-});   
-
-getLatestBlock();
-setInterval(getLatestBlock, 10000);
-
-setInterval(getHistory, 10011);
-
-function getLatestBlock() {
-    steem.api.getState("", function(err, data){
-        lastBlock = data.props.last_irreversible_block_num - 20;
-    });
-}
-
-function getHistory() {
-    steem.api.getAccountHistory("resteembot", 99999999, 1000, function (err, accountHistory) {
-        accountHistory = accountHistory
-            .filter(h => 
-                h[1].block > latestHistoryItem && h[1].block < lastBlock);
-		for (var i in accountHistory) {
-            accountHistory[i][1].op == "null";
-            console.log("> " + new Date() + " - " + accountHistory[i][1].timestamp);
-        }
-
-        if (accountHistory.length > 0)
-            latestHistoryItem = accountHistory[accountHistory.length-1][1].block
-    });   
+function pad(num, size) {
+    var s = num + "";
+    while (s.length < size) s = "0" + s;
+    return s;
 }

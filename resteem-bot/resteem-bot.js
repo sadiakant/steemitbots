@@ -281,6 +281,10 @@ function updateFollowerList(lastFollowerUsername) {
 }
 
 function setLastHandledTransaction(lastIndex) {
+	if (lastHandledTransaction > lastIndex)
+		log("WARNING: setting lastHandledTransaction to a lower value! " +
+			"Old = '" + lastHandledTransaction + "', New = '" + lastIndex + "'")
+
 	lastHandledTransaction = lastIndex;
 	fs.writeFile(LAST_TRANSACTION_FILEPATH, JSON.stringify({ index: lastIndex }), function (err) {
 		if (err) {
@@ -667,6 +671,19 @@ function logViaTransaction(ownUser, memo) {
 /////////////
 
 var dateFormatOptions = { weekday: "long", year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" };
-//new Date().toLocaleTimeString("en-us", dateFormatOptions)
 
-function log(str) { console.log(new Date().toString(), str); }
+function log(str) { 
+	var d = new Date();
+	var message = d.toLocaleTimeString("en-us", dateFormatOptions) + " " + str;
+
+	var fileName = "./logs/" + d.getFullYear() + "-" + pad(d.getMonth(), 2) + "-" + pad(d.getDay(), 2) + ".log"; 
+
+	console.log(message);
+	fs.appendFileSync(fileName, message + "\n");
+}
+
+function pad(num, size) {
+    var s = num + "";
+    while (s.length < size) s = "0" + s;
+    return s;
+}
