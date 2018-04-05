@@ -29,11 +29,11 @@ var lastResteemed = require(LAST_RESTEEM_FILEPATH);
 var lastVoted = require(LAST_VOTED_FILEPATH);
 
 config.categotyResteem.forEach(function(bot){
-	lastResteemed[bot.category] = lastResteemed[bot.category] || "01";
+	lastResteemed[bot.name + "_" + bot.category] = lastResteemed[bot.name + "_" + bot.category] || "01";
 });
 
 config.voteForPostsOf.forEach(function(bot){
-	lastVoted[bot.votePostsOf] = lastVoted[bot.votePostsOf] || "01";
+	lastVoted[bot.name + "_" + bot.votePostsOf] = lastVoted[bot.name + "_" + bot.votePostsOf] || "01";
 });
 
 var resteemqueue = [];
@@ -50,17 +50,17 @@ setTimeout(function() {
 		resteemPostsWithTag(bot);
 		setInterval(function () { resteemPostsWithTag(bot); }, 10 * MINUTE);
 	});
-}, 10*SECOND);
+}, 1*SECOND);
 
 setTimeout(function() {
 	config.voteForPostsOf.forEach(function (bot) {
 		voteForPostsOfUser(bot);
 		setInterval(function () { voteForPostsOfUser(bot); }, 60 * MINUTE);
 	});
-}, 20*SECOND);
+}, 5*SECOND);
 
 setInterval(function () { resteemAPostsInTheQueue(); }, 3 * SECOND);
-setInterval(function () { voteForAPostInTheQueue(); }, 40 * SECOND);
+setInterval(function () { voteForAPostInTheQueue(); }, 6 * SECOND);
 
 setInterval(function () { log("------------- [1 HOUR PASSED] -------------"); }, 1 * HOUR);
 
@@ -76,12 +76,12 @@ function resteemPostsWithTag(bot) {
 		var newResult = result
 			.sort(function(a,b){return a.created > b.created ? 1 : -1})
 			.filter(function (r) { 
-				return r.created > lastResteemed[bot.category];
+				return r.created > lastResteemed[bot.name + "_" + bot.category];
 			});
 
 		newResult.forEach(function (p) {
 			resteemqueue.push({ bot: bot, author: p.author, permlink: p.permlink });
-			setLastResteemed(bot.category, p.created);
+			setLastResteemed(bot, p.created);
 		});
 
 		log("Checked. " + newResult.length + " #" + bot.category + " posts found.");
@@ -96,11 +96,11 @@ function voteForPostsOfUser(bot) {
 		var posts = Object.keys(result.content)
 			.map(key=>result.content[key])
 			.sort(function(a,b){return a.created > b.created ? 1 : -1})
-			.filter(function (r) { return r.created > lastVoted[bot.votePostsOf]; });
+			.filter(function (r) { return r.created > lastVoted[bot.name + "_" + bot.votePostsOf]; });
 
 		 posts.forEach(function (p) {
 			votequeue.push({ bot:bot, author: p.author, permlink: p.permlink, votingPower: bot.votingPower*100 });
-			setLastVoted(bot.votePostsOf, p.created);
+			setLastVoted(bot, p.created);
 		});
 
 		log("Checked. " + posts.length + " @" + bot.votePostsOf + " posts found.");
@@ -109,16 +109,16 @@ function voteForPostsOfUser(bot) {
 
 /////////////
 
-function setLastResteemed(category, lastIndex) {
-	lastResteemed[category] = lastIndex;
+function setLastResteemed(bot, lastIndex) {
+	lastResteemed[bot.name + "_" + bot.category] = lastIndex;
 	fs.writeFile(LAST_RESTEEM_FILEPATH, JSON.stringify(lastResteemed), function (err) {
 		if (err)
 			log(err);
 	});
 }
 
-function setLastVoted(author, lastIndex) {
-	lastVoted[author] = lastIndex;
+function setLastVoted(bot, lastIndex) {
+	lastVoted[bot.name + "_" + bot.votePostsOf] = lastIndex;
 	fs.writeFile(LAST_VOTED_FILEPATH, JSON.stringify(lastVoted), function (err) {
 		if (err)
 			log(err);
