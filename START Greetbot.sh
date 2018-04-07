@@ -1,1 +1,0 @@
-gnome-terminal -e "bash -c \"cd /home/alex/Desktop/steemitbots/greetbot/; while true; do ls; /home/alex/Documents/node-v6.11.3-linux-x64/bin/node /home/alex/Desktop/steemitbots/greetbot/greetbot.js; echo -----; sleep 2; done\""
