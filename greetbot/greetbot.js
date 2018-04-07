@@ -16,7 +16,10 @@ var steemApiUtils = require("./steemApiUtils");
 
 /////////[ SETUP ]///////////
 
-steem.api.setOptions({ url: 'https://api.steemit.com' });
+// URL taken from: https://developers.steem.io/
+// If server is unreliable, select another URL
+//		or run own node (2GB needed) as described in the linked docs
+steem.api.setOptions({ url: 'https://gtg.steem.house:8090/' });
 
 var HOUR = 60 * 60 * 1000;
 

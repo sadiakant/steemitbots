@@ -32,8 +32,10 @@ var ADVERTISMENT_COMENT = "Hi. I am a volunteer bot for @resteembot that upvoted
 
 var steem = require('steem');
 
-var steemitWSS = "wss://steemd-int.steemit.com"
-steem.api.setOptions({ url: steemitWSS });
+// URL taken from: https://developers.steem.io/
+// If server is unreliable, select another URL
+//		or run own node (2GB needed) as described in the linked docs
+steem.api.setOptions({ url: 'https://gtg.steem.house:8090/' });
 
 var SECOND = 1000;
 var MINUTE = 60 * SECOND;

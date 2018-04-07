@@ -24,7 +24,7 @@ var ADVERTISMENT_COMENT = "Hi, %AUTHOR! I just resteemed your post!\n" +
 var RESTEEM_COMMENT = "Resteemed by @" + botUserData.name + "! Good Luck!\n" +
 	"[resteemedby]" +
 	"Curious? Read @resteembot's [introduction post](" + URL_TO_INTRODUCTION_POST + ")\n" +
-	"Check out the great posts I already resteemed.\n\n" + 
+	"Check out the great posts I already resteemed.\n\n" +
 	"[ResteemBot's Maker is Looking for Work](https://steemit.com/resteembot/@resteembot/hire-me-i-ll-code-for-crypto)";
 
 var RESTEEMED_THANKS_TO = "The resteem was paid by @[resteemedby]\n";
@@ -45,9 +45,10 @@ var WINNER_VOTING_POWER = 10000;
 var fs = require('fs');
 var steem = require('steem');
 
-// var steemitWSS = "wss://steemd-int.steemit.com"
-// steem.api.setOptions({ url: steemitWSS });
-steem.api.setOptions({ url: 'https://api.steemit.com' });
+// URL taken from: https://developers.steem.io/
+// If server is unreliable, select another URL
+//		or run own node (2GB needed) as described in the linked docs
+steem.api.setOptions({ url: 'https://gtg.steem.house:8090/' });
 
 var SECOND = 1000;
 var MINUTE = 60 * SECOND;
@@ -119,9 +120,10 @@ setInterval(function () { log("------------- [1 HOUR PASSED] -------------"); },
 /////////////
 
 function getLatestBlock() {
-    steem.api.getState("", function(err, data){
-        last_irreversible_block_num = data.props.last_irreversible_block_num - 20;
-    });
+	steem.api.getState("", function (err, data) {
+		if (err) { log(err); return; }
+		last_irreversible_block_num = data.props.last_irreversible_block_num - 20;
+	});
 }
 
 function checkShouldStop() { return !fs.existsSync("./DontStop"); }
@@ -173,7 +175,7 @@ function checkForNewTransactions() {
 			var isNewbie = follower.reputation <= NEWBIE_PROMOTION_MAX_REPUTATION;
 			var resteemsOwnPost = transaction.from === transaction.author;
 
-			if(transaction.from !== 'greetbot') { //TODO: Convert to whitelist & blacklist
+			if (transaction.from !== 'greetbot') { //TODO: Convert to whitelist & blacklist
 				if (follower.reputation < MIN_REPUTATION) {
 					logPublically(transaction.author + " has too low reputation : " + follower.reputation + ". Minimum is " + MIN_REPUTATION, transaction.from);
 					setLastHandledTransaction(index);
@@ -213,7 +215,7 @@ function checkForNewTransactions() {
 			});
 			checkIfPostIsLuckyEnoughToBeUpvoted(transaction);
 
-			if(transaction.from === "greetbot"){
+			if (transaction.from === "greetbot") {
 				logPublically("refunding", transaction.from,
 					transaction.amountStr, transaction.currency);
 			}
@@ -269,7 +271,7 @@ function updateFollowerList(lastFollowerUsername) {
 			if (result.length == followerBatchSize)
 				updateFollowerList(names[names.length - 1]);
 			else {
-				setTimeout(function(){				
+				setTimeout(function () {
 					saveFollowerList();
 				}, 5000);
 			}
@@ -340,7 +342,7 @@ function parseAsTransaction(historyItem) {
 			logPublically(transaction.from + "'s memo doesn't contain a SteemIt link (" + transaction.memo + "). "
 				+ "The bot will assume that it was a donation. Thank you. "
 				+ "(If it was not a donation, feel free to contact me to settle the problem.)",
-				transaction.amount >= 0.002? transaction.from : undefined);
+				transaction.amount >= 0.002 ? transaction.from : undefined);
 			return null;
 		}
 
@@ -355,7 +357,7 @@ function parseAsTransaction(historyItem) {
 	}
 	catch (ex) {
 		logPublically(transaction.from + "'s memo couldn't be parsed as link (" + transaction.memo + ")",
-			transaction.amount >= 0.002? transaction.from : undefined, 
+			transaction.amount >= 0.002 ? transaction.from : undefined,
 			transaction.amountStr,
 			transaction.currency);
 		return null;
@@ -367,6 +369,7 @@ function parseAsTransaction(historyItem) {
 
 function tryRetreiveEarnings(botUser, owner) {
 	steem.api.getAccounts([botUser.name], function (err, result) {
+		if (err) { log(err); return; }
 
 		var user = result[0];
 		var balances = [];
@@ -672,18 +675,18 @@ function logViaTransaction(ownUser, memo) {
 
 var dateFormatOptions = { weekday: "long", year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" };
 
-function log(str) { 
+function log(str) {
 	var d = new Date();
 	var message = d.toLocaleTimeString("en-us", dateFormatOptions) + " " + str;
 
-	var fileName = "./logs/" + d.getFullYear() + "-" + pad(d.getMonth(), 2) + "-" + pad(d.getDay(), 2) + ".log"; 
+	var fileName = "./logs/" + d.getFullYear() + "-" + pad(d.getMonth(), 2) + "-" + pad(d.getDay(), 2) + ".log";
 
 	console.log(message);
 	fs.appendFileSync(fileName, message + "\n");
 }
 
 function pad(num, size) {
-    var s = num + "";
-    while (s.length < size) s = "0" + s;
-    return s;
+	var s = num + "";
+	while (s.length < size) s = "0" + s;
+	return s;
 }

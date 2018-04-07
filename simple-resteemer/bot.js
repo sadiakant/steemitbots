@@ -24,7 +24,10 @@ var RESTEEM_COMMENT = `This post just got resteemed to 5000 followers.
 var fs = require('fs');
 var steem = require('steem');
 
-steem.api.setOptions({ url: 'https://api.steemit.com' });
+// URL taken from: https://developers.steem.io/
+// If server is unreliable, select another URL
+//		or run own node (2GB needed) as described in the linked docs
+steem.api.setOptions({ url: 'https://gtg.steem.house:8090/' });
 
 var STEEMITURL = "https://steemit.com/";
 var LAST_TRANSACTION_FILEPATH = "./lastHandledTransaction.json";
