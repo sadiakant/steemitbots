@@ -48,7 +48,7 @@ var steem = require('steem');
 // URL taken from: https://developers.steem.io/
 // If server is unreliable, select another URL
 //		or run own node (2GB needed) as described in the linked docs
-steem.api.setOptions({ url: 'https://gtg.steem.house:8090/' });
+// steem.api.setOptions({ url: 'https://gtg.steem.house:8090/' });
 
 var SECOND = 1000;
 var MINUTE = 60 * SECOND;
@@ -254,27 +254,28 @@ function updateFollowerList(lastFollowerUsername) {
 
 			log("Refreshing Followers : found " + names.length);
 			//log(names);
+			setTimeout(function () {
+				steem.api.getAccounts(names, function (err, users) {
+					if (!err) {
+						for (var i = 0; i < users.length; i++) {
+							var user = users[i];
+							var reputation = steem.formatter.reputation(user.reputation);
 
-			steem.api.getAccounts(names, function (err, users) {
-				if (!err) {
-					for (var i = 0; i < users.length; i++) {
-						var user = users[i];
-						var reputation = steem.formatter.reputation(user.reputation);
-
-						followers[user.name] = { reputation: reputation };
+							followers[user.name] = { reputation: reputation };
+						}
+					} else {
+						log(err);
 					}
-				} else {
-					log(err);
-				}
-			});
+				});
 
-			if (result.length == followerBatchSize)
-				updateFollowerList(names[names.length - 1]);
-			else {
-				setTimeout(function () {
-					saveFollowerList();
-				}, 5000);
-			}
+				if (result.length == followerBatchSize)
+					updateFollowerList(names[names.length - 1]);
+				else {
+					setTimeout(function () {
+						saveFollowerList();
+					}, 5000);
+				}
+			}, 1000);
 
 		} else {
 			log(err);
