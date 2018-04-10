@@ -255,7 +255,7 @@ function updateFollowerList(lastFollowerUsername) {
 			log("Refreshing Followers : found " + names.length);
 			//log(names);
 
-			steem.api.getAccounts(names, function (e, users) {
+			steem.api.getAccounts(names, function (err, users) {
 				if (!err) {
 					for (var i = 0; i < users.length; i++) {
 						var user = users[i];
