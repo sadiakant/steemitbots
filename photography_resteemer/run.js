@@ -24,37 +24,39 @@ var MIN_REPUTATION = 15,
 
 var botUserData = require("./userData.json");
 
-var URL_TO_INTRODUCTION_POST = "https://steemit.com/@rephoto";
+var URL_TO_INTRODUCTION_POST = "https://steemit.com/rephoto/@rephoto/introducing-rephoto-an-automated-upvote-and-resteem-service-for-undervalued-photography-content-across-the-steemit-platform";
 
-var URL_TO_LOGO = "some-small-image-url";
+var URL_TO_LOGO = "https://steemitimages.com/DQmVivrUHyW1pjamtKMjkhP8UCS64ZzE8x1HcSCGLzVnivV/rpthumb.png";
 
-var RESTEEM_COMMENT = `Your post has been resteemed by @` + botUserData.name + `! 
-[resteemedby]
-Good luck! 
-@` + botUserData.name + ` shares undervalued photography work with the steemit community
-Follow @` + botUserData.name + ` and read the [introduction post](` + URL_TO_INTRODUCTION_POST + `) to find out more!`;
+var RESTEEM_COMMENT = `Your awesome photography has been resteemed by @` + botUserData.name + `!  [resteemedby]
 
-var RESTEEMED_THANKS_TO = "The resteem was paid by @[resteemedby]\n";
+![logo](` + URL_TO_LOGO + `) 
 
-var WINNER_COMMENT = `Congratulation's! 
-Your post was randomly selected for an upvote from @` + botUserData.name + `! 
-Read the [introduction post](` + URL_TO_INTRODUCTION_POST + `) to find out more!
-[logo](` + URL_TO_LOGO + `)`;
+@` + botUserData.name + ` shares and upvotes undervalued photography content across the Steemit community!
 
-var WINNER_MEMO = "A post of yours was randomly upvoted by @" + botUserData.name
-	+ ". Thank you for using the bot.";
+Curious?  [Read more about us](` + URL_TO_INTRODUCTION_POST + `)`;
 
-var WINNER_VOTING_POWER = 10000;
+var RESTEEMED_THANKS_TO = "Resteem thanks to @[resteemedby]\n";
+
+var WINNER_COMMENT = `Have some extra LOVE with a random upvote from @` + botUserData.name + `!
+
+![logo](` + URL_TO_LOGO + `)
+
+Curious?  [Read more about us](` + URL_TO_INTRODUCTION_POST + `)`;
+
+var WINNER_MEMO = "You received a random upvote from @" + botUserData.name
+	+ ".";
+
+var WINNER_VOTING_POWER = 3333;
 
 /////////////
 
 var fs = require('fs');
 var steem = require('steem');
 
-// URL taken from: https://developers.steem.io/
-// If server is unreliable, select another URL
-//		or run own node (2GB needed) as described in the linked docs
-steem.api.setOptions({ url: 'https://gtg.steem.house:8090/' });
+// var steemitWSS = "wss://steemd-int.steemit.com"
+// steem.api.setOptions({ url: steemitWSS });
+// steem.api.setOptions({ url: 'https://api.steemit.com' });
 
 var SECOND = 1000;
 var MINUTE = 60 * SECOND;
@@ -153,7 +155,7 @@ function checkForNewTransactions() {
 			setLastHandledTransaction(index);
 		}
 		if (lastHandledTransaction != lastIndex)
-		setLastHandledTransaction(lastIndex);
+			setLastHandledTransaction(lastIndex);
 	});
 }
 
@@ -174,7 +176,7 @@ function readTransaction(transaction) {
 	var resteemsOwnPost = transaction.from === transaction.author;
 
 	if (follower.reputation < MIN_REPUTATION) {
-		logPublically(transaction.author + " has too low reputation : " + follower.reputation + 
+		logPublically(transaction.author + " has too low reputation : " + follower.reputation +
 			". Minimum is " + MIN_REPUTATION, transaction.from);
 		return;
 	}
@@ -197,15 +199,15 @@ function readTransaction(transaction) {
 	}
 
 	_self_snapshot = {
-		transaction:transaction,
-		resteemsOwnPost:resteemsOwnPost,
+		transaction: transaction,
+		resteemsOwnPost: resteemsOwnPost,
 	}
-	
+
 	getTags.call(_self_snapshot, transaction.author, transaction.permlink, function (err, tags) {
 		if (err || allowedTags.every(t1 => tags.every(t2 => t1 != t2))) {
 
 			logPublically(
-				transaction.from + ", " + botUser.name + " is a photography service. Please include the photography tag to resteem your post",
+				transaction.from + ", " + botUser.name + " is a photography service. Please include a photography tag to resteem your post!",
 				transaction.from, transaction.amountStr, transaction.currency);
 		}
 		else {
@@ -270,26 +272,28 @@ function updateFollowerList(lastFollowerUsername) {
 			log("Refreshing Followers : found " + names.length);
 			//log(names);
 
-			steem.api.getAccounts(names, function (e, users) {
-				if (!err) {
-					for (var i = 0; i < users.length; i++) {
-						var user = users[i];
-						var reputation = steem.formatter.reputation(user.reputation);
+			setTimeout(function () {
+				steem.api.getAccounts(names, function (e, users) {
+					if (!err) {
+						for (var i = 0; i < users.length; i++) {
+							var user = users[i];
+							var reputation = steem.formatter.reputation(user.reputation);
 
-						followers[user.name] = { reputation: reputation };
+							followers[user.name] = { reputation: reputation };
+						}
+					} else {
+						log(err);
 					}
-				} else {
-					log(err);
-				}
-			});
+				});
 
-			if (result.length == followerBatchSize)
-				updateFollowerList(names[names.length - 1]);
-			else {
-				setTimeout(function () {
-					saveFollowerList();
-				}, 5000);
-			}
+				if (result.length == followerBatchSize)
+					updateFollowerList(names[names.length - 1]);
+				else {
+					setTimeout(function () {
+						saveFollowerList();
+					}, 5000);
+				}
+			}, 1000)
 
 		} else {
 			log(err);
@@ -351,7 +355,7 @@ function parseAsTransaction(historyItem) {
 		var urlIndex = transaction.memo.indexOf(STEEMITURL);
 		if (urlIndex == -1) {
 			logPublically(transaction.from + "'s memo doesn't contain a SteemIt link (" + transaction.memo + "). "
-				+ "The bot will assume that it was a donation. Thank you. "
+				+ "The rephoto will assume that it was a donation. Thank you. "
 				+ "(If it was not a donation, feel free to contact me to settle the problem.)",
 				transaction.from);
 			return null;
