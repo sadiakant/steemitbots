@@ -469,7 +469,7 @@ function sendMoneyToFirstRecentAuthorWith(minReputation, maxReputation, minPostL
 	steem.api.getDiscussionsByCreated(searchOptions, function (e, posts) {
 
 		if (e !== null) {
-			console.log(e);
+			log(e);
 			return;
 		}
 
@@ -479,7 +479,7 @@ function sendMoneyToFirstRecentAuthorWith(minReputation, maxReputation, minPostL
 		steem.api.getAccounts(userNames, function (e, users) {
 
 			if (e !== null) {
-				console.log(e);
+				log(e);
 				return;
 			}
 
@@ -513,7 +513,7 @@ function advertise(processedPostCount, category, minReputation, maxReputation, m
 	steem.api.getDiscussionsByCreated(searchOptions, function (e, posts) {
 
 		if (e !== null) {
-			console.log(e);
+			log(e);
 			return;
 		}
 
@@ -523,7 +523,7 @@ function advertise(processedPostCount, category, minReputation, maxReputation, m
 		steem.api.getAccounts(userNames, function (e, users) {
 
 			if (e !== null) {
-				console.log(e);
+				log(e);
 				return;
 			}
 
@@ -623,20 +623,20 @@ function vote(ownUser, author, permlink, votingPower) {
 }
 
 function createComment(ownUser, author, permlink, body) {
-	console.log("Commenting on /@" + author + "/" + permlink);
+	log("Commenting on /@" + author + "/" + permlink);
 	steem.api.getContentReplies(author, permlink, function (err, replies) {
 		if(err) {
-		   console.log("Failed to get replies of /@" + author + "/" + permlink)
-		   console.log(err);
+		   log("Failed to get replies of /@" + author + "/" + permlink)
+		   log(err);
 		   return;
 		}
 	   
 		var matchingReplies = replies.filter(r=> r.author == ownUser.name).filter(r=> r.body == body);
 		if(matchingReplies.length > 0) {
-			console.log("Bot has already commented (" + matchingReplies.length + " times) on this post /@" + author + "/" + permlink);
+			log("Bot has already commented (" + matchingReplies.length + " times) on this post /@" + author + "/" + permlink);
 		}
 		else {
-			console.log("Writing comment...")
+			log("Writing comment...")
 			var commentPermlink = steem.formatter.commentPermlink(author, permlink);
 			steem.broadcast.comment(ownUser.wif, author, permlink, ownUser.name, commentPermlink, "", body, "", function (err, result) {
 				if (!err && result) {
@@ -675,7 +675,7 @@ function makeTransaction(ownUser, to, amount, currency, memo) {
 		if (!err && result) {
 			log("Successfull transaction from " + ownUser.name + " of " + amount + " " + currency + " to '" + to + "'");
 		} else {
-			console.log(err.message);
+			log(err.message);
 		}
 	});
 }
@@ -683,7 +683,7 @@ function makeTransaction(ownUser, to, amount, currency, memo) {
 function logViaTransaction(ownUser, memo) {
 	steem.broadcast.transfer(ownUser.wif, ownUser.name, ownUser.name, "0.001 SBD", memo, function (err, result) {
 		if (err) {
-			console.log(err.message);
+			log(err.message);
 		}
 	});
 }
