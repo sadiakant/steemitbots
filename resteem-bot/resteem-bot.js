@@ -23,9 +23,7 @@ var ADVERTISMENT_COMENT = "Hi, %AUTHOR! I just resteemed your post!\n" +
 
 var RESTEEM_COMMENT = "Resteemed by @" + botUserData.name + "! Good Luck!\n" +
 	"[resteemedby]" +
-	"Curious? Read @resteembot's [introduction post](" + URL_TO_INTRODUCTION_POST + ")\n" +
-	"Check out the great posts I already resteemed.\n\n" +
-	"[ResteemBot's Maker is Looking for Work](https://steemit.com/resteembot/@resteembot/hire-me-i-ll-code-for-crypto)";
+	"Check @resteembot's [introduction post](" + URL_TO_INTRODUCTION_POST + ") or the other great posts I already resteemed.";
 
 var RESTEEMED_THANKS_TO = "The resteem was paid by @[resteemedby]\n";
 
